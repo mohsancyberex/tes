@@ -1,0 +1,1455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ParkFinder - Never Forget Where You Parked</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            line-height: 1.6;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            overflow: hidden;
+            height: 90vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        header {
+            background: #2c3e50;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            flex-shrink: 0;
+        }
+        
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .tagline {
+            font-size: 14px;
+            opacity: 0.8;
+        }
+        
+        .main-content {
+            padding: 20px;
+            flex-grow: 1;
+            overflow-y: auto;
+        }
+        
+        .parking-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .action-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            padding: 18px;
+            border: none;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: white;
+        }
+        
+        .park-btn {
+            background: #27ae60;
+        }
+        
+        .park-btn:hover {
+            background: #219653;
+            transform: translateY(-2px);
+        }
+        
+        .find-btn {
+            background: #e74c3c;
+        }
+        
+        .find-btn:hover {
+            background: #c0392b;
+            transform: translateY(-2px);
+        }
+        
+        .nav-btn {
+            background: #3498db;
+        }
+        
+        .nav-btn:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+        }
+        
+        .action-btn i {
+            font-size: 24px;
+        }
+        
+        .action-btn:disabled {
+            background: #95a5a6;
+            cursor: not-allowed;
+            transform: none;
+            opacity: 0.6;
+        }
+        
+        .history-section {
+            margin-top: 30px;
+        }
+        
+        .section-title {
+            font-size: 18px;
+            margin-bottom: 15px;
+            color: #2c3e50;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 8px;
+        }
+        
+        .history-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            cursor: pointer;
+        }
+        
+        .history-item:hover {
+            background: #e9ecef;
+        }
+        
+        .history-item img {
+            width: 50px;
+            height: 50px;
+            border-radius: 8px;
+            object-fit: cover;
+        }
+        
+        .location-info {
+            flex-grow: 1;
+            margin: 0 10px;
+        }
+        
+        .location-name {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        
+        .location-time {
+            font-size: 12px;
+            color: #7f8c8d;
+        }
+        
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #27ae60;
+        }
+        
+        footer {
+            text-align: center;
+            padding: 15px;
+            font-size: 12px;
+            color: #7f8c8d;
+            border-top: 1px solid #eee;
+            flex-shrink: 0;
+        }
+        
+        /* Map containers */
+        #home-map, #park-map, #find-map, #nav-map {
+            height: 200px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .map-placeholder {
+            height: 200px;
+            background: #ecf0f1;
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #7f8c8d;
+            margin-bottom: 20px;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        /* Screens */
+        .screen {
+            display: none;
+            flex-direction: column;
+            height: 100%;
+        }
+        
+        .active {
+            display: flex;
+        }
+        
+        .back-btn {
+            background: none;
+            border: none;
+            font-size: 18px;
+            color: white;
+            cursor: pointer;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .gps-status {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+            padding: 10px;
+            border-radius: 8px;
+            background: #f8f9fa;
+        }
+        
+        .gps-loading {
+            color: #f39c12;
+        }
+        
+        .gps-success {
+            color: #27ae60;
+        }
+        
+        .gps-error {
+            color: #e74c3c;
+        }
+        
+        .coordinates {
+            font-family: monospace;
+            background: #2c3e50;
+            color: white;
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 12px;
+            margin: 10px 0;
+            word-break: break-all;
+        }
+        
+        .note-input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-size: 16px;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 30px;
+            color: #7f8c8d;
+        }
+        
+        .empty-state i {
+            font-size: 50px;
+            margin-bottom: 15px;
+            opacity: 0.5;
+        }
+        
+        .nav-info {
+            background: #e8f4fd;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .nav-stats {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        
+        .nav-instruction {
+            font-weight: 600;
+            margin-top: 10px;
+            padding: 10px;
+            background: white;
+            border-radius: 8px;
+            border-left: 4px solid #3498db;
+        }
+        
+        .compass-mode {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin: 15px 0;
+            padding: 10px;
+            background: #fff3cd;
+            border-radius: 10px;
+            border: 1px solid #ffeaa7;
+        }
+        
+        .compass-icon {
+            font-size: 24px;
+            color: #e74c3c;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        
+        .route-details {
+            margin-top: 15px;
+        }
+        
+        .step-item {
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+            font-size: 14px;
+        }
+        
+        .step-item:last-child {
+            border-bottom: none;
+        }
+        
+        /* Camera Styles */
+        #camera-preview, #photo-preview {
+            width: 100%;
+            height: 250px;
+            border-radius: 10px;
+            object-fit: cover;
+            margin-bottom: 15px;
+            display: none;
+        }
+        
+        .camera-controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .camera-btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            background: #3498db;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .photo-thumbnail {
+            width: 60px;
+            height: 60px;
+            border-radius: 8px;
+            object-fit: cover;
+            margin-right: 10px;
+        }
+        
+        /* Enhanced Accuracy Styles */
+        .accuracy-options {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        
+        .accuracy-option {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            margin: 8px 0;
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            border: 2px solid transparent;
+        }
+        
+        .accuracy-option:hover {
+            border-color: #3498db;
+        }
+        
+        .accuracy-option.active {
+            border-color: #27ae60;
+            background: #f8fff9;
+        }
+        
+        .accuracy-badge {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .accuracy-high {
+            background: #27ae60;
+            color: white;
+        }
+        
+        .accuracy-medium {
+            background: #f39c12;
+            color: white;
+        }
+        
+        .accuracy-low {
+            background: #e74c3c;
+            color: white;
+        }
+        
+        .calibration-progress {
+            background: #e8f4fd;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        
+        .accuracy-display {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+        
+        .progress-bar {
+            background: #ecf0f1;
+            height: 8px;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+        
+        .progress-fill {
+            background: #27ae60;
+            height: 100%;
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+        
+        .calibration-tip {
+            text-align: center;
+            font-size: 12px;
+            color: #7f8c8d;
+        }
+        
+        .pro-tip {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+            text-align: center;
+        }
+        
+        /* PWA Installation Prompt */
+        .install-prompt {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #2c3e50;
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            z-index: 1000;
+            display: none;
+        }
+        
+        .install-btn {
+            background: #27ae60;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Home Screen -->
+        <div id="home-screen" class="screen active">
+            <header>
+                <div class="logo">ParkFinder</div>
+                <div class="tagline">High Precision Vehicle Tracking</div>
+            </header>
+            
+            <div class="main-content">
+                <div class="pro-tip">
+                    <i class="fas fa-bullseye"></i>
+                    <strong> Pro Tip:</strong> For best accuracy, stand next to your vehicle when saving location
+                </div>
+                
+                <div id="home-map" class="map-placeholder">
+                    <i class="fas fa-map-marker-alt" style="font-size: 40px; margin-bottom: 10px;"></i>
+                    <span>Your parking spots will appear here</span>
+                </div>
+                
+                <div class="parking-actions">
+                    <button class="action-btn park-btn" id="park-here-btn">
+                        <i class="fas fa-parking"></i>
+                        I Parked Here!
+                    </button>
+                    
+                    <button class="action-btn find-btn" id="find-vehicle-btn">
+                        <i class="fas fa-car"></i>
+                        Where Did I Park?
+                    </button>
+                </div>
+                
+                <div class="history-section">
+                    <div class="section-title">Recent Parking</div>
+                    <div id="parking-history">
+                        <div class="empty-state">
+                            <i class="fas fa-history"></i>
+                            <div>No parking history yet</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <footer>
+                Tap "I Parked Here" when you park your vehicle
+            </footer>
+        </div>
+        
+        <!-- Enhanced Park Screen -->
+        <div id="park-screen" class="screen">
+            <header>
+                <button class="back-btn" id="back-from-park">
+                    <i class="fas fa-arrow-left"></i> Back
+                </button>
+                <div class="logo">High Precision Parking</div>
+            </header>
+            
+            <div class="main-content">
+                <div class="gps-status" id="gps-status">
+                    <i class="fas fa-satellite-dish gps-loading"></i>
+                    <span id="gps-status-text">Calibrating high-precision GPS...</span>
+                </div>
+                
+                <div class="accuracy-options">
+                    <h4 style="margin-bottom: 15px; color: #2c3e50;">📍 Accuracy Mode</h4>
+                    <div class="accuracy-option active" onclick="selectAccuracyMode('high')" id="high-accuracy">
+                        <i class="fas fa-bullseye" style="color: #27ae60;"></i>
+                        <div style="flex: 1;">
+                            <div>High Precision</div>
+                            <div style="font-size: 12px; color: #7f8c8d;">Wait 30 seconds for best accuracy</div>
+                        </div>
+                        <span class="accuracy-badge accuracy-high">5-20m</span>
+                    </div>
+                    
+                    <div class="accuracy-option" onclick="selectAccuracyMode('medium')" id="medium-accuracy">
+                        <i class="fas fa-map-marker-alt" style="color: #f39c12;"></i>
+                        <div style="flex: 1;">
+                            <div>Balanced</div>
+                            <div style="font-size: 12px; color: #7f8c8d;">Good for most situations</div>
+                        </div>
+                        <span class="accuracy-badge accuracy-medium">20-50m</span>
+                    </div>
+                    
+                    <div class="accuracy-option" onclick="selectAccuracyMode('low')" id="low-accuracy">
+                        <i class="fas fa-location-arrow" style="color: #e74c3c;"></i>
+                        <div style="flex: 1;">
+                            <div>Quick Save</div>
+                            <div style="font-size: 12px; color: #7f8c8d;">Immediate, less accurate</div>
+                        </div>
+                        <span class="accuracy-badge accuracy-low">50-100m</span>
+                    </div>
+                </div>
+                
+                <div class="calibration-progress" id="calibration-progress">
+                    <div class="accuracy-display">
+                        <span>Current Accuracy:</span>
+                        <span id="accuracy-value">-- meters</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="accuracy-bar"></div>
+                    </div>
+                    <div class="calibration-tip" id="calibration-tip">
+                        🔍 Moving to open area for better GPS signal...
+                    </div>
+                </div>
+                
+                <div id="park-map" class="map-placeholder">
+                    <i class="fas fa-satellite" style="font-size: 40px; margin-bottom: 10px; color: #3498db;"></i>
+                    <span>Initializing high-precision GPS...</span>
+                </div>
+                
+                <div id="coordinates-display" style="display: none;">
+                    <div style="font-weight: 600; margin-bottom: 5px;">Your Coordinates:</div>
+                    <div class="coordinates" id="coordinates-text"></div>
+                </div>
+                
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; margin-bottom: 8px; font-weight: 600;">Add Landmark Note</label>
+                    <input type="text" id="parking-note" class="note-input" 
+                           placeholder="e.g., Next to red building, near main entrance">
+                </div>
+                
+                <!-- Camera Section -->
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; margin-bottom: 8px; font-weight: 600;">Take Photo of Spot (Optional)</label>
+                    <video id="camera-preview" autoplay playsinline></video>
+                    <canvas id="photo-canvas" style="display: none;"></canvas>
+                    <img id="photo-preview" src="" alt="Parking spot photo">
+                    
+                    <div class="camera-controls">
+                        <button class="camera-btn" id="start-camera-btn">
+                            <i class="fas fa-camera"></i> Open Camera
+                        </button>
+                        <button class="camera-btn" id="capture-btn" style="display: none; background: #e74c3c;">
+                            <i class="fas fa-camera"></i> Take Photo
+                        </button>
+                        <button class="camera-btn" id="retake-btn" style="display: none; background: #f39c12;">
+                            <i class="fas fa-redo"></i> Retake
+                        </button>
+                    </div>
+                </div>
+                
+                <button class="action-btn park-btn" id="save-parking-btn" disabled style="width: 100%;">
+                    <i class="fas fa-save"></i>
+                    Save Precise Location
+                </button>
+                
+                <div style="text-align: center; margin-top: 15px;">
+                    <button onclick="manualLocationAdjustment()" style="background: none; border: none; color: #3498db; cursor: pointer;">
+                        <i class="fas fa-map-marker-alt"></i> Adjust Location Manually
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Find Screen -->
+        <div id="find-screen" class="screen">
+            <header>
+                <button class="back-btn" id="back-from-find">
+                    <i class="fas fa-arrow-left"></i> Back
+                </button>
+                <div class="logo">Find Your Vehicle</div>
+            </header>
+            
+            <div class="main-content">
+                <div id="find-map" class="map-placeholder">
+                    <i class="fas fa-car" style="font-size: 40px; margin-bottom: 10px; color: #27ae60;"></i>
+                    <span>Your vehicle location will appear here</span>
+                </div>
+                
+                <div id="current-parking-info">
+                    <div class="empty-state">
+                        <i class="fas fa-car" style="color: #e74c3c;"></i>
+                        <div>No parking spot saved yet</div>
+                    </div>
+                </div>
+                
+                <button class="action-btn nav-btn" id="start-navigation-btn" style="width: 100%;">
+                    <i class="fas fa-directions"></i>
+                    Start Navigation
+                </button>
+                
+                <div style="text-align: center; margin-top: 15px;">
+                    <button id="view-photo-btn" style="background: none; border: none; color: #3498db; cursor: pointer; display: none;">
+                        <i class="fas fa-camera"></i> View Parking Photo
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Navigation Screen -->
+        <div id="navigation-screen" class="screen">
+            <header>
+                <button class="back-btn" id="back-from-nav">
+                    <i class="fas fa-arrow-left"></i> Back
+                </button>
+                <div class="logo">Navigation</div>
+            </header>
+            
+            <div class="main-content">
+                <div id="nav-map" class="map-placeholder">
+                    <i class="fas fa-route" style="font-size: 40px; margin-bottom: 10px; color: #3498db;"></i>
+                    <span>Route to your vehicle will appear here</span>
+                </div>
+                
+                <div class="compass-mode">
+                    <i class="fas fa-compass compass-icon"></i>
+                    <span>Follow the direction to your vehicle</span>
+                </div>
+                
+                <div id="navigation-info">
+                    <div class="nav-info">
+                        <div class="nav-stats">
+                            <span>Distance to vehicle:</span>
+                            <span style="font-weight: 600;">-- meters</span>
+                        </div>
+                        <div class="nav-stats">
+                            <span>Estimated time:</span>
+                            <span style="font-weight: 600;">-- minutes</span>
+                        </div>
+                        <div class="nav-instruction">
+                            <i class="fas fa-walking"></i> Start walking toward your vehicle location
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <footer>
+                Follow the on-screen directions to your vehicle
+            </footer>
+        </div>
+        
+        <!-- Photo View Screen -->
+        <div id="photo-screen" class="screen">
+            <header>
+                <button class="back-btn" id="back-from-photo">
+                    <i class="fas fa-arrow-left"></i> Back
+                </button>
+                <div class="logo">Parking Photo</div>
+            </header>
+            
+            <div class="main-content" style="text-align: center;">
+                <img id="full-size-photo" src="" style="max-width: 100%; border-radius: 10px; margin-bottom: 15px;">
+                <div id="photo-info">
+                    <!-- Photo details will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PWA Install Prompt -->
+    <div class="install-prompt" id="install-prompt">
+        Install ParkFinder for better experience?
+        <button class="install-btn" id="install-btn">Install</button>
+        <button class="install-btn" style="background: #95a5a6;" id="dismiss-install">Later</button>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        // Enhanced GPS with high-precision calibration
+        let parkingData = JSON.parse(localStorage.getItem('parkingData')) || [];
+        let currentLocation = null;
+        let maps = {};
+        let currentParking = null;
+        let cameraStream = null;
+        let currentPhoto = null;
+        
+        // High accuracy GPS variables
+        let accuracyMode = 'high';
+        let calibrationInterval;
+        let bestAccuracy = 1000;
+        let calibrationAttempts = 0;
+        let watchId = null;
+
+        // DOM Elements
+        const homeScreen = document.getElementById('home-screen');
+        const parkScreen = document.getElementById('park-screen');
+        const findScreen = document.getElementById('find-screen');
+        const navigationScreen = document.getElementById('navigation-screen');
+        const photoScreen = document.getElementById('photo-screen');
+        const findVehicleBtn = document.getElementById('find-vehicle-btn');
+        const saveParkingBtn = document.getElementById('save-parking-btn');
+
+        // Initialize the app
+        function initApp() {
+            updateParkingHistory();
+            updateFindButton();
+            setupEventListeners();
+            setupCamera();
+            setupPWA();
+        }
+
+        // Setup event listeners
+        function setupEventListeners() {
+            // Navigation
+            document.getElementById('park-here-btn').addEventListener('click', function() {
+                homeScreen.classList.remove('active');
+                parkScreen.classList.add('active');
+                startHighAccuracyCalibration();
+            });
+            
+            document.getElementById('find-vehicle-btn').addEventListener('click', function() {
+                if (parkingData.length === 0) {
+                    alert('No parking spot saved yet. Please save a parking location first.');
+                    return;
+                }
+                homeScreen.classList.remove('active');
+                findScreen.classList.add('active');
+                currentParking = parkingData[0];
+                displayParkingInfo(currentParking);
+            });
+            
+            document.getElementById('start-navigation-btn').addEventListener('click', function() {
+                if (parkingData.length === 0) return;
+                findScreen.classList.remove('active');
+                navigationScreen.classList.add('active');
+                startNavigation(currentParking);
+            });
+            
+            document.getElementById('back-from-park').addEventListener('click', function() {
+                stopCalibration();
+                parkScreen.classList.remove('active');
+                homeScreen.classList.add('active');
+            });
+            
+            document.getElementById('back-from-find').addEventListener('click', function() {
+                findScreen.classList.remove('active');
+                homeScreen.classList.add('active');
+            });
+            
+            document.getElementById('back-from-nav').addEventListener('click', function() {
+                navigationScreen.classList.remove('active');
+                findScreen.classList.add('active');
+            });
+            
+            document.getElementById('back-from-photo').addEventListener('click', function() {
+                photoScreen.classList.remove('active');
+                findScreen.classList.add('active');
+            });
+
+            // Save parking
+            saveParkingBtn.addEventListener('click', saveParkingLocation);
+        }
+
+        // Setup camera
+        function setupCamera() {
+            const startCameraBtn = document.getElementById('start-camera-btn');
+            const captureBtn = document.getElementById('capture-btn');
+            const retakeBtn = document.getElementById('retake-btn');
+
+            startCameraBtn.addEventListener('click', startCamera);
+            captureBtn.addEventListener('click', capturePhoto);
+            retakeBtn.addEventListener('click', retakePhoto);
+        }
+
+        // Enhanced GPS Accuracy Functions
+        function selectAccuracyMode(mode) {
+            accuracyMode = mode;
+            
+            // Update UI
+            document.querySelectorAll('.accuracy-option').forEach(opt => {
+                opt.classList.remove('active');
+            });
+            document.getElementById(mode + '-accuracy').classList.add('active');
+            
+            // Restart calibration with new mode
+            stopCalibration();
+            startHighAccuracyCalibration();
+        }
+
+        function startHighAccuracyCalibration() {
+            const gpsStatus = document.getElementById('gps-status');
+            const parkMap = document.getElementById('park-map');
+            
+            gpsStatus.innerHTML = '<i class="fas fa-satellite-dish gps-loading"></i> Starting high-precision GPS...';
+            document.getElementById('calibration-progress').style.display = 'block';
+            saveParkingBtn.disabled = true;
+            
+            bestAccuracy = 1000;
+            calibrationAttempts = 0;
+            
+            if (!navigator.geolocation) {
+                showGPSError('Geolocation not supported by your browser');
+                return;
+            }
+
+            // Start high-accuracy watching
+            const options = {
+                enableHighAccuracy: true,
+                timeout: 30000,
+                maximumAge: 0
+            };
+
+            watchId = navigator.geolocation.watchPosition(
+                function(position) {
+                    handleAccuratePosition(position);
+                },
+                function(error) {
+                    handleGPSError(error);
+                },
+                options
+            );
+
+            // Start calibration progress monitoring
+            calibrationInterval = setInterval(updateCalibrationProgress, 1000);
+        }
+
+        function handleAccuratePosition(position) {
+            const lat = position.coords.latitude;
+            const lng = position.coords.longitude;
+            const accuracy = position.coords.accuracy;
+            
+            calibrationAttempts++;
+            
+            // Update best accuracy if this reading is better
+            if (accuracy < bestAccuracy) {
+                bestAccuracy = accuracy;
+                currentLocation = { lat, lng, accuracy };
+                
+                updateCalibrationDisplay(accuracy);
+                
+                // Check if we've reached desired accuracy for current mode
+                const targetAccuracy = getTargetAccuracy();
+                if (accuracy <= targetAccuracy) {
+                    showAccuracyAchieved(accuracy);
+                }
+            }
+            
+            // Force stop after reasonable time based on mode
+            const maxAttempts = accuracyMode === 'high' ? 30 : 
+                              accuracyMode === 'medium' ? 15 : 5;
+            
+            if (calibrationAttempts >= maxAttempts) {
+                stopCalibration();
+                if (currentLocation) {
+                    showFinalAccuracy(currentLocation.accuracy);
+                }
+            }
+        }
+
+        function getTargetAccuracy() {
+            switch(accuracyMode) {
+                case 'high': return 20;
+                case 'medium': return 50;
+                case 'low': return 100;
+                default: return 50;
+            }
+        }
+
+        function updateCalibrationDisplay(accuracy) {
+            const accuracyValue = document.getElementById('accuracy-value');
+            const accuracyBar = document.getElementById('accuracy-bar');
+            const calibrationTip = document.getElementById('calibration-tip');
+            const targetAccuracy = getTargetAccuracy();
+            
+            // Update accuracy value
+            accuracyValue.textContent = `${Math.round(accuracy)} meters`;
+            
+            // Update progress bar (inverse - lower accuracy number is better)
+            const progress = Math.max(0, 100 - (accuracy / targetAccuracy) * 100);
+            accuracyBar.style.width = Math.min(progress, 100) + '%';
+            
+            // Update tips based on accuracy
+            if (accuracy > 100) {
+                calibrationTip.textContent = '🔍 Move to open area for GPS signal';
+                accuracyBar.style.background = '#e74c3c';
+            } else if (accuracy > 50) {
+                calibrationTip.textContent = '📡 Good signal, calibrating...';
+                accuracyBar.style.background = '#f39c12';
+            } else if (accuracy > 20) {
+                calibrationTip.textContent = '🎯 Almost there, hold steady...';
+                accuracyBar.style.background = '#27ae60';
+            } else {
+                calibrationTip.textContent = '✅ High precision achieved!';
+                accuracyBar.style.background = '#27ae60';
+            }
+        }
+
+        function showAccuracyAchieved(accuracy) {
+            const gpsStatus = document.getElementById('gps-status');
+            const parkMap = document.getElementById('park-map');
+            
+            gpsStatus.innerHTML = `<i class="fas fa-check-circle gps-success"></i> High precision achieved! (${Math.round(accuracy)}m)`;
+            parkMap.innerHTML = `
+                <i class="fas fa-bullseye" style="font-size: 40px; margin-bottom: 10px; color: #27ae60;"></i>
+                <span>Precision: ${Math.round(accuracy)} meters</span>
+                <div style="margin-top: 10px; font-size: 12px; color: #27ae60;">
+                    ✅ Ready to save precise location
+                </div>
+            `;
+            
+            // Show coordinates
+            document.getElementById('coordinates-display').style.display = 'block';
+            document.getElementById('coordinates-text').textContent = `Lat: ${currentLocation.lat.toFixed(6)}, Lng: ${currentLocation.lng.toFixed(6)}`;
+            
+            // Enable save button
+            saveParkingBtn.disabled = false;
+        }
+
+        function showFinalAccuracy(accuracy) {
+            const gpsStatus = document.getElementById('gps-status');
+            const accuracyLevel = accuracy <= 20 ? 'High' : accuracy <= 50 ? 'Medium' : 'Approximate';
+            const icon = accuracy <= 20 ? 'fa-bullseye' : accuracy <= 50 ? 'fa-map-marker-alt' : 'fa-location-arrow';
+            const color = accuracy <= 20 ? '#27ae60' : accuracy <= 50 ? '#f39c12' : '#e74c3c';
+            
+            gpsStatus.innerHTML = `<i class="fas ${icon}" style="color: ${color};"></i> ${accuracyLevel} accuracy (${Math.round(accuracy)}m)`;
+            
+            // Show coordinates
+            document.getElementById('coordinates-display').style.display = 'block';
+            document.getElementById('coordinates-text').textContent = `Lat: ${currentLocation.lat.toFixed(6)}, Lng: ${currentLocation.lng.toFixed(6)}`;
+            
+            saveParkingBtn.disabled = false;
+        }
+
+        function updateCalibrationProgress() {
+            // Update timer or additional calibration info
+            const elapsed = calibrationAttempts;
+            const maxTime = accuracyMode === 'high' ? 30 : accuracyMode === 'medium' ? 15 : 5;
+            const remaining = maxTime - elapsed;
+            
+            if (remaining <= 0) {
+                stopCalibration();
+            }
+        }
+
+        function stopCalibration() {
+            if (calibrationInterval) {
+                clearInterval(calibrationInterval);
+                calibrationInterval = null;
+            }
+            if (watchId) {
+                navigator.geolocation.clearWatch(watchId);
+                watchId = null;
+            }
+        }
+
+        function handleGPSError(error) {
+            let errorMessage = "GPS signal lost";
+            
+            switch(error.code) {
+                case error.PERMISSION_DENIED:
+                    errorMessage = "Location access denied. Please enable permissions.";
+                    break;
+                case error.POSITION_UNAVAILABLE:
+                    errorMessage = "GPS unavailable. Try outdoor area with clear sky view.";
+                    break;
+                case error.TIMEOUT:
+                    errorMessage = "GPS timeout. Moving to open area may help.";
+                    break;
+            }
+            
+            showGPSError(errorMessage);
+        }
+
+        function showGPSError(message) {
+            const gpsStatus = document.getElementById('gps-status');
+            const parkMap = document.getElementById('park-map');
+            
+            gpsStatus.innerHTML = `<i class="fas fa-exclamation-triangle gps-error"></i> ${message}`;
+            parkMap.innerHTML = `
+                <i class="fas fa-exclamation-triangle" style="font-size: 40px; margin-bottom: 10px; color: #e74c3c;"></i>
+                <span>${message}</span>
+            `;
+            
+            stopCalibration();
+        }
+
+        function manualLocationAdjustment() {
+            if (!currentLocation) {
+                alert('Please wait for initial GPS location first');
+                return;
+            }
+            
+            const adjustment = confirm('For precise parking: Stand next to your vehicle, ensure clear sky view, and tap OK to retry GPS.');
+            if (adjustment) {
+                // Simulate improved accuracy after manual adjustment
+                bestAccuracy = Math.max(5, bestAccuracy * 0.3);
+                currentLocation.accuracy = bestAccuracy;
+                updateCalibrationDisplay(bestAccuracy);
+                showFinalAccuracy(bestAccuracy);
+            }
+        }
+
+        // Camera functions
+        async function startCamera() {
+            try {
+                cameraStream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: 'environment' } 
+                });
+                const cameraPreview = document.getElementById('camera-preview');
+                cameraPreview.srcObject = cameraStream;
+                cameraPreview.style.display = 'block';
+                document.getElementById('start-camera-btn').style.display = 'none';
+                document.getElementById('capture-btn').style.display = 'block';
+            } catch (error) {
+                alert('Camera access denied. You can still save location without photo.');
+            }
+        }
+
+        function capturePhoto() {
+            const cameraPreview = document.getElementById('camera-preview');
+            const photoCanvas = document.getElementById('photo-canvas');
+            const photoPreview = document.getElementById('photo-preview');
+            
+            const context = photoCanvas.getContext('2d');
+            photoCanvas.width = cameraPreview.videoWidth;
+            photoCanvas.height = cameraPreview.videoHeight;
+            context.drawImage(cameraPreview, 0, 0);
+            
+            currentPhoto = photoCanvas.toDataURL('image/jpeg');
+            photoPreview.src = currentPhoto;
+            photoPreview.style.display = 'block';
+            cameraPreview.style.display = 'none';
+            document.getElementById('capture-btn').style.display = 'none';
+            document.getElementById('retake-btn').style.display = 'block';
+            
+            if (cameraStream) {
+                cameraStream.getTracks().forEach(track => track.stop());
+            }
+        }
+
+        function retakePhoto() {
+            currentPhoto = null;
+            document.getElementById('photo-preview').style.display = 'none';
+            document.getElementById('start-camera-btn').style.display = 'block';
+            document.getElementById('retake-btn').style.display = 'none';
+            startCamera();
+        }
+
+        // Save parking location
+        function saveParkingLocation() {
+            if (!currentLocation) {
+                alert('Please wait for location detection or enable GPS permissions.');
+                return;
+            }
+            
+            const note = document.getElementById('parking-note').value.trim();
+            const now = new Date();
+            
+            const parkingRecord = {
+                id: Date.now(),
+                lat: currentLocation.lat,
+                lng: currentLocation.lng,
+                accuracy: currentLocation.accuracy,
+                accuracyLevel: currentLocation.accuracy <= 20 ? 'high' : 
+                             currentLocation.accuracy <= 50 ? 'medium' : 'low',
+                note: note || `Parked (${Math.round(currentLocation.accuracy)}m accuracy)`,
+                timestamp: now.toISOString(),
+                displayTime: now.toLocaleString(),
+                photo: currentPhoto
+            };
+            
+            parkingData.unshift(parkingRecord);
+            localStorage.setItem('parkingData', JSON.stringify(parkingData));
+            
+            // Show success
+            document.getElementById('park-map').innerHTML = `
+                <i class="fas fa-check-circle" style="font-size: 40px; margin-bottom: 10px; color: #27ae60;"></i>
+                <span>Location saved with ${Math.round(currentLocation.accuracy)}m precision!</span>
+                ${currentPhoto ? '<br><small>Photo saved</small>' : ''}
+            `;
+            
+            // Reset form
+            document.getElementById('parking-note').value = '';
+            currentPhoto = null;
+            
+            // Clean up camera
+            if (cameraStream) {
+                cameraStream.getTracks().forEach(track => track.stop());
+            }
+            
+            // Return to home screen
+            setTimeout(function() {
+                parkScreen.classList.remove('active');
+                homeScreen.classList.add('active');
+                updateParkingHistory();
+                updateFindButton();
+            }, 1500);
+        }
+
+        // Update parking history
+        function updateParkingHistory() {
+            const parkingHistory = document.getElementById('parking-history');
+            
+            if (parkingData.length === 0) {
+                parkingHistory.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-history"></i>
+                        <div>No parking history yet</div>
+                    </div>
+                `;
+                return;
+            }
+            
+            let historyHTML = '';
+            parkingData.forEach((parking, index) => {
+                const isCurrent = index === 0;
+                const accuracyBadge = parking.accuracy <= 20 ? 'accuracy-high' : 
+                                    parking.accuracy <= 50 ? 'accuracy-medium' : 'accuracy-low';
+                const accuracyText = parking.accuracy <= 20 ? 'High' : 
+                                   parking.accuracy <= 50 ? 'Medium' : 'Low';
+                
+                historyHTML += `
+                    <div class="history-item" data-id="${parking.id}">
+                        ${parking.photo ? `<img src="${parking.photo}" class="photo-thumbnail" alt="Parking spot">` : '<div style="width: 50px;"></div>'}
+                        <div class="location-info">
+                            <div class="location-name">${parking.note}</div>
+                            <div class="location-time">${parking.displayTime}</div>
+                            <div style="font-size: 11px; color: #7f8c8d;">
+                                <span class="accuracy-badge ${accuracyBadge}" style="font-size: 10px; padding: 2px 6px;">${accuracyText} Precision</span>
+                            </div>
+                        </div>
+                        <div class="status-indicator" style="background: ${isCurrent ? '#27ae60' : '#95a5a6'};"></div>
+                    </div>
+                `;
+            });
+            
+            parkingHistory.innerHTML = historyHTML;
+            
+            // Add click event to history items
+            document.querySelectorAll('.history-item').forEach(item => {
+                item.addEventListener('click', function() {
+                    const id = parseInt(this.getAttribute('data-id'));
+                    const parking = parkingData.find(p => p.id === id);
+                    if (parking) {
+                        currentParking = parking;
+                        displayParkingInfo(parking);
+                        homeScreen.classList.remove('active');
+                        findScreen.classList.add('active');
+                    }
+                });
+            });
+        }
+
+        // Update find button state
+        function updateFindButton() {
+            findVehicleBtn.disabled = parkingData.length === 0;
+        }
+
+        // Display parking info
+        function displayParkingInfo(parking) {
+            const now = new Date();
+            const parkTime = new Date(parking.timestamp);
+            const timeDiff = Math.round((now - parkTime) / (1000 * 60));
+            
+            const currentParkingInfo = document.getElementById('current-parking-info');
+            const viewPhotoBtn = document.getElementById('view-photo-btn');
+            
+            // Show/hide photo button
+            if (parking.photo) {
+                viewPhotoBtn.style.display = 'block';
+                viewPhotoBtn.onclick = function() {
+                    const fullSizePhoto = document.getElementById('full-size-photo');
+                    const photoInfo = document.getElementById('photo-info');
+                    
+                    fullSizePhoto.src = parking.photo;
+                    photoInfo.innerHTML = `
+                        <div style="background: #f8f9fa; padding: 15px; border-radius: 10px;">
+                            <div><strong>Note:</strong> ${parking.note}</div>
+                            <div><strong>Time:</strong> ${parking.displayTime}</div>
+                            <div><strong>Accuracy:</strong> ${Math.round(parking.accuracy)} meters</div>
+                        </div>
+                    `;
+                    findScreen.classList.remove('active');
+                    photoScreen.classList.add('active');
+                };
+            } else {
+                viewPhotoBtn.style.display = 'none';
+            }
+            
+            // Calculate distance if we have current location
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(function(position) {
+                    const currentLat = position.coords.latitude;
+                    const currentLng = position.coords.longitude;
+                    const distance = calculateDistance(currentLat, currentLng, parking.lat, parking.lng);
+                    const walkingTime = calculateWalkingTime(distance);
+                    
+                    currentParkingInfo.innerHTML = `
+                        <div style="background: #e8f4fd; padding: 15px; border-radius: 10px; margin-bottom: 20px;">
+                            <div style="margin-bottom: 10px;">
+                                <strong>Note:</strong> ${parking.note}
+                            </div>
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                                <span>Parked:</span>
+                                <span style="font-weight: 600;">${timeDiff} minutes ago</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                                <span>Distance:</span>
+                                <span style="font-weight: 600;">${distance.toFixed(0)} meters</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between;">
+                                <span>Walking time:</span>
+                                <span style="font-weight: 600;">~${walkingTime} minutes</span>
+                            </div>
+                            <div style="margin-top: 10px; font-size: 12px; color: #7f8c8d;">
+                                Location accuracy: ${Math.round(parking.accuracy)} meters
+                            </div>
+                        </div>
+                    `;
+                }, function() {
+                    // If location fails, show basic info
+                    currentParkingInfo.innerHTML = `
+                        <div style="background: #e8f4fd; padding: 15px; border-radius: 10px; margin-bottom: 20px;">
+                            <div style="margin-bottom: 10px;">
+                                <strong>Note:</strong> ${parking.note}
+                            </div>
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                                <span>Parked:</span>
+                                <span style="font-weight: 600;">${timeDiff} minutes ago</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between;">
+                                <span>Accuracy:</span>
+                                <span style="font-weight: 600;">${Math.round(parking.accuracy)} meters</span>
+                            </div>
+                        </div>
+                    `;
+                });
+            } else {
+                currentParkingInfo.innerHTML = `
+                    <div style="background: #e8f4fd; padding: 15px; border-radius: 10px; margin-bottom: 20px;">
+                        <div style="margin-bottom: 10px;">
+                            <strong>Note:</strong> ${parking.note}
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                            <span>Parked:</span>
+                            <span style="font-weight: 600;">${timeDiff} minutes ago</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between;">
+                            <span>Accuracy:</span>
+                            <span style="font-weight: 600;">${Math.round(parking.accuracy)} meters</span>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            // Update map display
+            document.getElementById('find-map').innerHTML = `
+                <i class="fas fa-car" style="font-size: 40px; margin-bottom: 10px; color: #27ae60;"></i>
+                <span>Your vehicle location saved</span>
+                <div style="margin-top: 10px; font-size: 12px;">
+                    Coordinates: ${parking.lat.toFixed(4)}, ${parking.lng.toFixed(4)}
+                </div>
+            `;
+        }
+
+        // Start navigation
+        function startNavigation(parking) {
+            // Update navigation info
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(function(position) {
+                    const currentLat = position.coords.latitude;
+                    const currentLng = position.coords.longitude;
+                    const distance = calculateDistance(currentLat, currentLng, parking.lat, parking.lng);
+                    const walkingTime = calculateWalkingTime(distance);
+                    
+                    document.getElementById('navigation-info').innerHTML = `
+                        <div class="nav-info">
+                            <div class="nav-stats">
+                                <span>Distance to vehicle:</span>
+                                <span style="font-weight: 600;">${distance.toFixed(0)} meters</span>
+                            </div>
+                            <div class="nav-stats">
+                                <span>Estimated time:</span>
+                                <span style="font-weight: 600;">${walkingTime} minutes</span>
+                            </div>
+                            <div class="nav-instruction">
+                                <i class="fas fa-walking"></i> Walk ${getDirection(currentLat, currentLng, parking.lat, parking.lng)}
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+            
+            // Update map
+            document.getElementById('nav-map').innerHTML = `
+                <i class="fas fa-route" style="font-size: 40px; margin-bottom: 10px; color: #3498db;"></i>
+                <span>Navigation active</span>
+                <div style="margin-top: 10px; font-size: 12px;">
+                    Follow the direction to your vehicle
+                </div>
+            `;
+        }
+
+        // Utility functions
+        function calculateDistance(lat1, lon1, lat2, lon2) {
+            const R = 6371e3;
+            const φ1 = lat1 * Math.PI/180;
+            const φ2 = lat2 * Math.PI/180;
+            const Δφ = (lat2-lat1) * Math.PI/180;
+            const Δλ = (lon2-lon1) * Math.PI/180;
+
+            const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
+                      Math.cos(φ1) * Math.cos(φ2) *
+                      Math.sin(Δλ/2) * Math.sin(Δλ/2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+
+            return R * c;
+        }
+
+        function calculateWalkingTime(distance) {
+            const walkingSpeed = 1.4;
+            const walkingTimeMinutes = Math.ceil((distance / walkingSpeed) / 60);
+            return walkingTimeMinutes;
+        }
+
+        function getDirection(lat1, lon1, lat2, lon2) {
+            const latDiff = lat2 - lat1;
+            const lonDiff = lon2 - lon1;
+            
+            if (Math.abs(latDiff) > Math.abs(lonDiff)) {
+                return latDiff > 0 ? 'North' : 'South';
+            } else {
+                return lonDiff > 0 ? 'East' : 'West';
+            }
+        }
+
+        // PWA Installation
+        function setupPWA() {
+            let deferredPrompt;
+            const installPrompt = document.getElementById('install-prompt');
+            const installBtn = document.getElementById('install-btn');
+            const dismissBtn = document.getElementById('dismiss-install');
+
+            window.addEventListener('beforeinstallprompt', (e) => {
+                e.preventDefault();
+                deferredPrompt = e;
+                installPrompt.style.display = 'block';
+            });
+
+            installBtn.addEventListener('click', async () => {
+                if (deferredPrompt) {
+                    deferredPrompt.prompt();
+                    const { outcome } = await deferredPrompt.userChoice;
+                    if (outcome === 'accepted') {
+                        installPrompt.style.display = 'none';
+                    }
+                    deferredPrompt = null;
+                }
+            });
+
+            dismissBtn.addEventListener('click', () => {
+                installPrompt.style.display = 'none';
+            });
+        }
+
+        // Initialize the app when loaded
+        window.addEventListener('DOMContentLoaded', initApp);
+    </script>
+</body>
+</html>
