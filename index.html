@@ -108,6 +108,15 @@
             transform: translateY(-2px);
         }
         
+        .ar-btn {
+            background: #9b59b6;
+        }
+        
+        .ar-btn:hover {
+            background: #8e44ad;
+            transform: translateY(-2px);
+        }
+        
         .action-btn i {
             font-size: 24px;
         }
@@ -476,6 +485,138 @@
             text-align: center;
         }
         
+        /* Augmented Reality Styles */
+        .ar-container {
+            position: relative;
+            width: 100%;
+            height: 60vh;
+            border-radius: 15px;
+            overflow: hidden;
+            margin-bottom: 15px;
+            background: #000;
+        }
+
+        #ar-camera-preview {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transform: scaleX(-1); /* Mirror the camera feed */
+        }
+
+        .ar-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .ar-direction {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+        }
+
+        .direction-arrow {
+            font-size: 80px;
+            color: #e74c3c;
+            text-shadow: 0 0 20px rgba(231, 76, 60, 0.7);
+            animation: bounce 2s infinite;
+        }
+
+        .direction-distance {
+            background: rgba(44, 62, 80, 0.9);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-size: 18px;
+            font-weight: bold;
+            margin-top: 10px;
+            display: inline-block;
+        }
+
+        .ar-guidance {
+            position: absolute;
+            bottom: 20px;
+            left: 0;
+            width: 100%;
+            text-align: center;
+            background: rgba(44, 62, 80, 0.9);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+        }
+
+        .compass-rose {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 80px;
+            height: 80px;
+            background: rgba(44, 62, 80, 0.9);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .compass-needle {
+            position: absolute;
+            width: 3px;
+            height: 30px;
+            background: #e74c3c;
+            top: 10px;
+            left: 50%;
+            transform-origin: bottom center;
+            transition: transform 0.3s ease;
+        }
+
+        .ar-controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .ar-control-btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            background: #3498db;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-weight: 600;
+        }
+
+        .ar-control-btn.exit {
+            background: #e74c3c;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translate(-50%, -50%) scale(1); }
+            50% { transform: translate(-50%, -50%) scale(1.1); }
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.7; }
+            100% { opacity: 1; }
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+
         /* PWA Installation Prompt */
         .install-prompt {
             position: fixed;
@@ -683,6 +824,12 @@
                     <i class="fas fa-directions"></i>
                     Start Navigation
                 </button>
+
+                <!-- New AR Navigation Button -->
+                <button class="action-btn ar-btn" id="start-ar-navigation-btn" style="width: 100%; margin-top: 10px;">
+                    <i class="fas fa-vr-cardboard"></i>
+                    AR Navigation
+                </button>
                 
                 <div style="text-align: center; margin-top: 15px;">
                     <button id="view-photo-btn" style="background: none; border: none; color: #3498db; cursor: pointer; display: none;">
@@ -733,6 +880,57 @@
                 Follow the on-screen directions to your vehicle
             </footer>
         </div>
+
+        <!-- Augmented Reality Navigation Screen -->
+        <div id="ar-navigation-screen" class="screen">
+            <header>
+                <button class="back-btn" id="back-from-ar">
+                    <i class="fas fa-arrow-left"></i> Back
+                </button>
+                <div class="logo">AR Navigation</div>
+            </header>
+            
+            <div class="main-content">
+                <div class="ar-container">
+                    <video id="ar-camera-preview" autoplay playsinline></video>
+                    <div class="ar-overlay">
+                        <div class="compass-rose">
+                            <div class="compass-needle" id="compass-needle"></div>
+                            <span id="compass-degree">0°</span>
+                        </div>
+                        <div class="ar-direction">
+                            <div class="direction-arrow" id="direction-arrow">↑</div>
+                            <div class="direction-distance" id="direction-distance">-- m</div>
+                        </div>
+                        <div class="ar-guidance">
+                            <div id="ar-instruction">Point camera toward your vehicle</div>
+                            <div style="font-size: 12px; opacity: 0.8; margin-top: 5px;">
+                                Accuracy: <span id="ar-accuracy">--</span> meters
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="ar-controls">
+                    <button class="ar-control-btn" onclick="switchCamera()">
+                        <i class="fas fa-sync-alt"></i> Switch Camera
+                    </button>
+                    <button class="ar-control-btn exit" onclick="exitARNavigation()">
+                        <i class="fas fa-times"></i> Exit AR
+                    </button>
+                </div>
+
+                <div style="background: #f8f9fa; padding: 15px; border-radius: 10px; margin-top: 15px;">
+                    <h4 style="margin-bottom: 10px; color: #2c3e50;">🎯 AR Navigation Tips</h4>
+                    <ul style="font-size: 14px; color: #7f8c8d; padding-left: 20px;">
+                        <li>Hold phone steady for better direction accuracy</li>
+                        <li>Follow the arrow direction to your vehicle</li>
+                        <li>Distance updates in real-time as you move</li>
+                        <li>Use in well-lit areas for best results</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
         
         <!-- Photo View Screen -->
         <div id="photo-screen" class="screen">
@@ -776,11 +974,19 @@
         let calibrationAttempts = 0;
         let watchId = null;
 
+        // Augmented Reality Navigation Variables
+        let arCameraStream = null;
+        let isUsingBackCamera = true;
+        let compassPermission = false;
+        let arUpdateInterval = null;
+        let currentHeading = 0;
+
         // DOM Elements
         const homeScreen = document.getElementById('home-screen');
         const parkScreen = document.getElementById('park-screen');
         const findScreen = document.getElementById('find-screen');
         const navigationScreen = document.getElementById('navigation-screen');
+        const arNavigationScreen = document.getElementById('ar-navigation-screen');
         const photoScreen = document.getElementById('photo-screen');
         const findVehicleBtn = document.getElementById('find-vehicle-btn');
         const saveParkingBtn = document.getElementById('save-parking-btn');
@@ -792,6 +998,7 @@
             setupEventListeners();
             setupCamera();
             setupPWA();
+            setupARNavigation();
         }
 
         // Setup event listeners
@@ -820,6 +1027,12 @@
                 navigationScreen.classList.add('active');
                 startNavigation(currentParking);
             });
+
+            // AR Navigation
+            document.getElementById('start-ar-navigation-btn').addEventListener('click', function() {
+                if (parkingData.length === 0) return;
+                startARNavigation();
+            });
             
             document.getElementById('back-from-park').addEventListener('click', function() {
                 stopCalibration();
@@ -835,6 +1048,10 @@
             document.getElementById('back-from-nav').addEventListener('click', function() {
                 navigationScreen.classList.remove('active');
                 findScreen.classList.add('active');
+            });
+
+            document.getElementById('back-from-ar').addEventListener('click', function() {
+                exitARNavigation();
             });
             
             document.getElementById('back-from-photo').addEventListener('click', function() {
@@ -855,6 +1072,14 @@
             startCameraBtn.addEventListener('click', startCamera);
             captureBtn.addEventListener('click', capturePhoto);
             retakeBtn.addEventListener('click', retakePhoto);
+        }
+
+        // Setup AR Navigation
+        function setupARNavigation() {
+            // Add device orientation listener for compass
+            if (typeof DeviceOrientationEvent !== 'undefined') {
+                window.addEventListener('deviceorientation', handleDeviceOrientation);
+            }
         }
 
         // Enhanced GPS Accuracy Functions
@@ -1129,6 +1354,206 @@
             document.getElementById('start-camera-btn').style.display = 'block';
             document.getElementById('retake-btn').style.display = 'none';
             startCamera();
+        }
+
+        // Augmented Reality Navigation Functions
+        async function startARNavigation() {
+            if (!currentParking) {
+                alert('No parking spot selected.');
+                return;
+            }
+
+            try {
+                await startARCamera();
+                
+                // Switch to AR screen
+                findScreen.classList.remove('active');
+                arNavigationScreen.classList.add('active');
+                
+                // Start AR updates
+                startARUpdates();
+                
+            } catch (error) {
+                alert('AR Navigation requires camera access. Please allow camera permissions.');
+                console.error('AR Navigation error:', error);
+            }
+        }
+
+        async function startARCamera() {
+            stopARCamera(); // Stop any existing stream
+            
+            const constraints = {
+                video: {
+                    facingMode: isUsingBackCamera ? 'environment' : 'user',
+                    width: { ideal: 1280 },
+                    height: { ideal: 720 }
+                }
+            };
+
+            try {
+                arCameraStream = await navigator.mediaDevices.getUserMedia(constraints);
+                const arCameraPreview = document.getElementById('ar-camera-preview');
+                arCameraPreview.srcObject = arCameraStream;
+            } catch (error) {
+                throw new Error('Camera access denied');
+            }
+        }
+
+        function stopARCamera() {
+            if (arCameraStream) {
+                arCameraStream.getTracks().forEach(track => track.stop());
+                arCameraStream = null;
+            }
+        }
+
+        function startARUpdates() {
+            // Update AR display every second
+            arUpdateInterval = setInterval(updateARDirection, 1000);
+            
+            // Initial update
+            updateARDirection();
+        }
+
+        function stopARUpdates() {
+            if (arUpdateInterval) {
+                clearInterval(arUpdateInterval);
+                arUpdateInterval = null;
+            }
+        }
+
+        function handleDeviceOrientation(event) {
+            if (event.alpha !== null) {
+                currentHeading = event.alpha;
+                const compassNeedle = document.getElementById('compass-needle');
+                const compassDegree = document.getElementById('compass-degree');
+                
+                compassNeedle.style.transform = `rotate(${currentHeading}deg)`;
+                compassDegree.textContent = `${Math.round(currentHeading)}°`;
+            }
+        }
+
+        function updateARDirection() {
+            if (!currentParking || !navigator.geolocation) return;
+
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const userLat = position.coords.latitude;
+                    const userLng = position.coords.longitude;
+                    const accuracy = position.coords.accuracy;
+                    
+                    const vehicleLat = currentParking.lat;
+                    const vehicleLng = currentParking.lng;
+                    
+                    // Calculate distance and bearing
+                    const distance = calculateDistance(userLat, userLng, vehicleLat, vehicleLng);
+                    const bearing = calculateBearing(userLat, userLng, vehicleLat, vehicleLng);
+                    
+                    // Update AR display
+                    updateARDirectionArrow(bearing);
+                    updateARDistance(distance);
+                    updateARInstruction(distance, bearing);
+                    updateARAccuracy(accuracy);
+                },
+                (error) => {
+                    console.error('GPS error in AR mode:', error);
+                },
+                { enableHighAccuracy: true, timeout: 5000 }
+            );
+        }
+
+        function calculateBearing(lat1, lng1, lat2, lng2) {
+            const φ1 = lat1 * Math.PI / 180;
+            const φ2 = lat2 * Math.PI / 180;
+            const Δλ = (lng2 - lng1) * Math.PI / 180;
+
+            const y = Math.sin(Δλ) * Math.cos(φ2);
+            const x = Math.cos(φ1) * Math.sin(φ2) - 
+                      Math.sin(φ1) * Math.cos(φ2) * Math.cos(Δλ);
+            
+            let bearing = Math.atan2(y, x);
+            bearing = bearing * 180 / Math.PI;
+            bearing = (bearing + 360) % 360;
+            
+            return bearing;
+        }
+
+        function updateARDirectionArrow(bearing) {
+            const arrowElement = document.getElementById('direction-arrow');
+            
+            // Calculate relative direction
+            const relativeBearing = (bearing - currentHeading + 360) % 360;
+            
+            // Set arrow direction based on relative bearing
+            if (relativeBearing >= 337.5 || relativeBearing < 22.5) {
+                arrowElement.textContent = '↑'; // North
+            } else if (relativeBearing >= 22.5 && relativeBearing < 67.5) {
+                arrowElement.textContent = '↗'; // Northeast
+            } else if (relativeBearing >= 67.5 && relativeBearing < 112.5) {
+                arrowElement.textContent = '→'; // East
+            } else if (relativeBearing >= 112.5 && relativeBearing < 157.5) {
+                arrowElement.textContent = '↘'; // Southeast
+            } else if (relativeBearing >= 157.5 && relativeBearing < 202.5) {
+                arrowElement.textContent = '↓'; // South
+            } else if (relativeBearing >= 202.5 && relativeBearing < 247.5) {
+                arrowElement.textContent = '↙'; // Southwest
+            } else if (relativeBearing >= 247.5 && relativeBearing < 292.5) {
+                arrowElement.textContent = '←'; // West
+            } else {
+                arrowElement.textContent = '↖'; // Northwest
+            }
+        }
+
+        function updateARDistance(distance) {
+            const distanceElement = document.getElementById('direction-distance');
+            
+            if (distance < 1000) {
+                distanceElement.textContent = `${Math.round(distance)} m`;
+                distanceElement.style.background = distance < 20 ? 
+                    'rgba(39, 174, 96, 0.9)' : 'rgba(231, 76, 60, 0.9)';
+            } else {
+                distanceElement.textContent = `${(distance / 1000).toFixed(1)} km`;
+                distanceElement.style.background = 'rgba(231, 76, 60, 0.9)';
+            }
+        }
+
+        function updateARInstruction(distance, bearing) {
+            const instructionElement = document.getElementById('ar-instruction');
+            
+            if (distance < 10) {
+                instructionElement.textContent = '🎉 You have arrived! Your vehicle should be visible.';
+                instructionElement.style.color = '#27ae60';
+            } else if (distance < 50) {
+                instructionElement.textContent = '🛑 Getting close! Look around for your vehicle.';
+                instructionElement.style.color = '#f39c12';
+            } else {
+                instructionElement.textContent = '🚶 Follow the arrow direction to your vehicle';
+                instructionElement.style.color = '#3498db';
+            }
+        }
+
+        function updateARAccuracy(accuracy) {
+            const accuracyElement = document.getElementById('ar-accuracy');
+            accuracyElement.textContent = Math.round(accuracy);
+            
+            if (accuracy < 10) {
+                accuracyElement.style.color = '#27ae60';
+            } else if (accuracy < 30) {
+                accuracyElement.style.color = '#f39c12';
+            } else {
+                accuracyElement.style.color = '#e74c3c';
+            }
+        }
+
+        function switchCamera() {
+            isUsingBackCamera = !isUsingBackCamera;
+            startARCamera();
+        }
+
+        function exitARNavigation() {
+            stopARUpdates();
+            stopARCamera();
+            arNavigationScreen.classList.remove('active');
+            findScreen.classList.add('active');
         }
 
         // Save parking location
