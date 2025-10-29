@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ParkFinder - Never Forget Where You Parked</title>
+    <title>ParkFinder - By Mohsan cyberEx</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
@@ -602,6 +602,160 @@
             background: #e74c3c;
         }
 
+        /* AR Path Drawing Styles */
+        .ar-path {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .path-point {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            background: #3498db;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 0 10px rgba(52, 152, 219, 0.7);
+        }
+
+        .path-line {
+            position: absolute;
+            height: 4px;
+            background: #3498db;
+            transform-origin: 0 50%;
+            box-shadow: 0 0 10px rgba(52, 152, 219, 0.7);
+        }
+
+        .distance-marker {
+            position: absolute;
+            background: rgba(44, 62, 80, 0.9);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: bold;
+            transform: translate(-50%, -50%);
+        }
+
+        /* Settings & Smart Features */
+        .settings-section {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+
+        .setting-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .setting-item:last-child {
+            border-bottom: none;
+        }
+
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 24px;
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .toggle-slider {
+            background-color: #27ae60;
+        }
+
+        input:checked + .toggle-slider:before {
+            transform: translateX(26px);
+        }
+
+        .notification {
+            background: #e8f4fd;
+            border-left: 4px solid #3498db;
+            padding: 12px;
+            margin: 10px 0;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .notification.warning {
+            background: #fff3cd;
+            border-left-color: #f39c12;
+        }
+
+        .notification.success {
+            background: #d4edda;
+            border-left-color: #27ae60;
+        }
+
+        .notification.danger {
+            background: #f8d7da;
+            border-left-color: #e74c3c;
+        }
+
+        /* Offline Maps */
+        .offline-maps-section {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+
+        .download-progress {
+            background: #e9ecef;
+            border-radius: 10px;
+            height: 10px;
+            margin: 10px 0;
+            overflow: hidden;
+        }
+
+        .download-progress-bar {
+            background: #27ae60;
+            height: 100%;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
         @keyframes bounce {
             0%, 100% { transform: translate(-50%, -50%) scale(1); }
             50% { transform: translate(-50%, -50%) scale(1.1); }
@@ -649,13 +803,13 @@
         <div id="home-screen" class="screen active">
             <header>
                 <div class="logo">ParkFinder</div>
-                <div class="tagline">High Precision Vehicle Tracking</div>
+                <div class="tagline">Advanced Vehicle Tracking</div>
             </header>
             
             <div class="main-content">
                 <div class="pro-tip">
                     <i class="fas fa-bullseye"></i>
-                    <strong> Pro Tip:</strong> For best accuracy, stand next to your vehicle when saving location
+                    <strong> Pro Tip:</strong> Enable Auto-Park for automatic parking detection
                 </div>
                 
                 <div id="home-map" class="map-placeholder">
@@ -674,6 +828,41 @@
                         Where Did I Park?
                     </button>
                 </div>
+
+                <!-- Smart Features Status -->
+                <div class="settings-section">
+                    <div class="setting-item">
+                        <div>
+                            <div style="font-weight: 600;">Auto-Park Detection</div>
+                            <div style="font-size: 12px; color: #7f8c8d;">Automatically save parking location</div>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="auto-park-toggle" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    
+                    <div class="setting-item">
+                        <div>
+                            <div style="font-weight: 600;">Smart Reminders</div>
+                            <div style="font-size: 12px; color: #7f8c8d;">Parking time limits & restrictions</div>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="smart-reminders-toggle" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    
+                    <div class="setting-item">
+                        <div>
+                            <div style="font-weight: 600;">Offline Maps</div>
+                            <div style="font-size: 12px; color: #7f8c8d;">Download maps for offline use</div>
+                        </div>
+                        <button class="action-btn" style="padding: 8px 12px; font-size: 14px;" onclick="showOfflineMapsScreen()">
+                            <i class="fas fa-download"></i> Manage
+                        </button>
+                    </div>
+                </div>
                 
                 <div class="history-section">
                     <div class="section-title">Recent Parking</div>
@@ -687,7 +876,7 @@
             </div>
             
             <footer>
-                Tap "I Parked Here" when you park your vehicle
+                Auto-Park: <span id="auto-park-status">Active</span> • Smart Reminders: <span id="reminders-status">On</span>
             </footer>
         </div>
         
@@ -828,13 +1017,21 @@
                 <!-- New AR Navigation Button -->
                 <button class="action-btn ar-btn" id="start-ar-navigation-btn" style="width: 100%; margin-top: 10px;">
                     <i class="fas fa-vr-cardboard"></i>
-                    AR Navigation
+                    AR Navigation with Path
                 </button>
                 
                 <div style="text-align: center; margin-top: 15px;">
                     <button id="view-photo-btn" style="background: none; border: none; color: #3498db; cursor: pointer; display: none;">
                         <i class="fas fa-camera"></i> View Parking Photo
                     </button>
+                </div>
+
+                <!-- Smart Reminders Section -->
+                <div id="smart-reminders-section" style="display: none;">
+                    <div class="section-title">Smart Reminders</div>
+                    <div id="reminders-list">
+                        <!-- Reminders will be populated here -->
+                    </div>
                 </div>
             </div>
         </div>
@@ -874,6 +1071,15 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Offline Mode Indicator -->
+                <div id="offline-mode-indicator" class="notification" style="display: none;">
+                    <i class="fas fa-wifi-slash"></i>
+                    <div>
+                        <div style="font-weight: 600;">Offline Mode</div>
+                        <div style="font-size: 12px;">Using downloaded maps for navigation</div>
+                    </div>
+                </div>
             </div>
             
             <footer>
@@ -894,6 +1100,11 @@
                 <div class="ar-container">
                     <video id="ar-camera-preview" autoplay playsinline></video>
                     <div class="ar-overlay">
+                        <!-- AR Path Drawing -->
+                        <div class="ar-path" id="ar-path">
+                            <!-- Path elements will be dynamically added here -->
+                        </div>
+                        
                         <div class="compass-rose">
                             <div class="compass-needle" id="compass-needle"></div>
                             <span id="compass-degree">0°</span>
@@ -912,6 +1123,9 @@
                 </div>
 
                 <div class="ar-controls">
+                    <button class="ar-control-btn" onclick="toggleARPath()" id="toggle-path-btn">
+                        <i class="fas fa-route"></i> Show Path
+                    </button>
                     <button class="ar-control-btn" onclick="switchCamera()">
                         <i class="fas fa-sync-alt"></i> Switch Camera
                     </button>
@@ -925,9 +1139,60 @@
                     <ul style="font-size: 14px; color: #7f8c8d; padding-left: 20px;">
                         <li>Hold phone steady for better direction accuracy</li>
                         <li>Follow the arrow direction to your vehicle</li>
+                        <li>Blue path shows the route to your vehicle</li>
                         <li>Distance updates in real-time as you move</li>
-                        <li>Use in well-lit areas for best results</li>
                     </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Offline Maps Screen -->
+        <div id="offline-maps-screen" class="screen">
+            <header>
+                <button class="back-btn" id="back-from-offline">
+                    <i class="fas fa-arrow-left"></i> Back
+                </button>
+                <div class="logo">Offline Maps</div>
+            </header>
+            
+            <div class="main-content">
+                <div class="offline-maps-section">
+                    <h4 style="margin-bottom: 15px; color: #2c3e50;">
+                        <i class="fas fa-download"></i> Download Maps for Offline Use
+                    </h4>
+                    
+                    <div class="setting-item">
+                        <div>
+                            <div style="font-weight: 600;">Current Area</div>
+                            <div style="font-size: 12px; color: #7f8c8d;">5km radius around your location</div>
+                        </div>
+                        <button class="action-btn" style="padding: 8px 12px; font-size: 14px;" onclick="downloadCurrentArea()" id="download-current-btn">
+                            <i class="fas fa-download"></i> Download
+                        </button>
+                    </div>
+                    
+                    <div class="download-progress" id="download-progress" style="display: none;">
+                        <div class="download-progress-bar" id="download-progress-bar"></div>
+                    </div>
+                    <div id="download-status" style="text-align: center; font-size: 12px; margin-top: 5px;"></div>
+                </div>
+                
+                <div class="settings-section">
+                    <div class="section-title">Downloaded Maps</div>
+                    <div id="downloaded-maps-list">
+                        <div class="empty-state" style="padding: 20px;">
+                            <i class="fas fa-map" style="font-size: 30px;"></i>
+                            <div>No maps downloaded yet</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="notification">
+                    <i class="fas fa-info-circle"></i>
+                    <div>
+                        <div style="font-weight: 600;">Offline Navigation</div>
+                        <div style="font-size: 12px;">Download maps for navigation without internet connection</div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -980,6 +1245,15 @@
         let compassPermission = false;
         let arUpdateInterval = null;
         let currentHeading = 0;
+        let showARPath = false;
+        let arPathPoints = [];
+
+        // Smart Features
+        let autoParkEnabled = true;
+        let smartRemindersEnabled = true;
+        let offlineMapsEnabled = false;
+        let downloadedMaps = JSON.parse(localStorage.getItem('downloadedMaps')) || [];
+        let autoParkWatchId = null;
 
         // DOM Elements
         const homeScreen = document.getElementById('home-screen');
@@ -987,6 +1261,7 @@
         const findScreen = document.getElementById('find-screen');
         const navigationScreen = document.getElementById('navigation-screen');
         const arNavigationScreen = document.getElementById('ar-navigation-screen');
+        const offlineMapsScreen = document.getElementById('offline-maps-screen');
         const photoScreen = document.getElementById('photo-screen');
         const findVehicleBtn = document.getElementById('find-vehicle-btn');
         const saveParkingBtn = document.getElementById('save-parking-btn');
@@ -999,6 +1274,8 @@
             setupCamera();
             setupPWA();
             setupARNavigation();
+            setupSmartFeatures();
+            checkConnectivity();
         }
 
         // Setup event listeners
@@ -1019,6 +1296,7 @@
                 findScreen.classList.add('active');
                 currentParking = parkingData[0];
                 displayParkingInfo(currentParking);
+                checkSmartReminders();
             });
             
             document.getElementById('start-navigation-btn').addEventListener('click', function() {
@@ -1053,6 +1331,11 @@
             document.getElementById('back-from-ar').addEventListener('click', function() {
                 exitARNavigation();
             });
+
+            document.getElementById('back-from-offline').addEventListener('click', function() {
+                offlineMapsScreen.classList.remove('active');
+                homeScreen.classList.add('active');
+            });
             
             document.getElementById('back-from-photo').addEventListener('click', function() {
                 photoScreen.classList.remove('active');
@@ -1061,6 +1344,24 @@
 
             // Save parking
             saveParkingBtn.addEventListener('click', saveParkingLocation);
+
+            // Smart feature toggles
+            document.getElementById('auto-park-toggle').addEventListener('change', function() {
+                autoParkEnabled = this.checked;
+                document.getElementById('auto-park-status').textContent = autoParkEnabled ? 'Active' : 'Inactive';
+                localStorage.setItem('autoParkEnabled', autoParkEnabled);
+                if (autoParkEnabled) {
+                    startAutoParkDetection();
+                } else {
+                    stopAutoParkDetection();
+                }
+            });
+
+            document.getElementById('smart-reminders-toggle').addEventListener('change', function() {
+                smartRemindersEnabled = this.checked;
+                document.getElementById('reminders-status').textContent = smartRemindersEnabled ? 'On' : 'Off';
+                localStorage.setItem('smartRemindersEnabled', smartRemindersEnabled);
+            });
         }
 
         // Setup camera
@@ -1080,6 +1381,27 @@
             if (typeof DeviceOrientationEvent !== 'undefined') {
                 window.addEventListener('deviceorientation', handleDeviceOrientation);
             }
+        }
+
+        // Setup Smart Features
+        function setupSmartFeatures() {
+            // Load settings from localStorage
+            autoParkEnabled = localStorage.getItem('autoParkEnabled') !== 'false';
+            smartRemindersEnabled = localStorage.getItem('smartRemindersEnabled') !== 'false';
+            
+            // Update UI
+            document.getElementById('auto-park-toggle').checked = autoParkEnabled;
+            document.getElementById('smart-reminders-toggle').checked = smartRemindersEnabled;
+            document.getElementById('auto-park-status').textContent = autoParkEnabled ? 'Active' : 'Inactive';
+            document.getElementById('reminders-status').textContent = smartRemindersEnabled ? 'On' : 'Off';
+            
+            // Start auto-park if enabled
+            if (autoParkEnabled) {
+                startAutoParkDetection();
+            }
+            
+            // Update downloaded maps list
+            updateDownloadedMapsList();
         }
 
         // Enhanced GPS Accuracy Functions
@@ -1453,6 +1775,11 @@
                     updateARDistance(distance);
                     updateARInstruction(distance, bearing);
                     updateARAccuracy(accuracy);
+                    
+                    // Update AR path if enabled
+                    if (showARPath) {
+                        updateARPath(userLat, userLng, vehicleLat, vehicleLng, distance, bearing);
+                    }
                 },
                 (error) => {
                     console.error('GPS error in AR mode:', error);
@@ -1520,13 +1847,13 @@
             const instructionElement = document.getElementById('ar-instruction');
             
             if (distance < 10) {
-                instructionElement.textContent = '🎉 You have arrived! Your vehicle should be visible.';
+                instructionElement.textContent = '🎉 agye Bike Nazr.';
                 instructionElement.style.color = '#27ae60';
             } else if (distance < 50) {
-                instructionElement.textContent = '🛑 Getting close! Look around for your vehicle.';
+                instructionElement.textContent = '🛑 Pass hi ha bike Mohsan,,Idr udr dekh.';
                 instructionElement.style.color = '#f39c12';
             } else {
-                instructionElement.textContent = '🚶 Follow the arrow direction to your vehicle';
+                instructionElement.textContent = '🚶 Follow the arrow direction ';
                 instructionElement.style.color = '#3498db';
             }
         }
@@ -1544,6 +1871,90 @@
             }
         }
 
+        // AR Path Drawing Functions
+        function toggleARPath() {
+            showARPath = !showARPath;
+            const pathBtn = document.getElementById('toggle-path-btn');
+            
+            if (showARPath) {
+                pathBtn.innerHTML = '<i class="fas fa-route"></i> Hide Path';
+                pathBtn.style.background = '#27ae60';
+                // Clear existing path
+                clearARPath();
+            } else {
+                pathBtn.innerHTML = '<i class="fas fa-route"></i> Show Path';
+                pathBtn.style.background = '#3498db';
+                clearARPath();
+            }
+        }
+
+        function clearARPath() {
+            const arPath = document.getElementById('ar-path');
+            arPath.innerHTML = '';
+            arPathPoints = [];
+        }
+
+        function updateARPath(userLat, userLng, vehicleLat, vehicleLng, distance, bearing) {
+            const arPath = document.getElementById('ar-path');
+            
+            // Clear previous path
+            arPath.innerHTML = '';
+            
+            // Calculate path points (simplified for demo)
+            const steps = Math.min(10, Math.max(3, Math.floor(distance / 10)));
+            
+            for (let i = 1; i <= steps; i++) {
+                const progress = i / steps;
+                const pointLat = userLat + (vehicleLat - userLat) * progress;
+                const pointLng = userLng + (vehicleLng - userLng) * progress;
+                
+                // Convert to screen coordinates (simplified)
+                const screenX = 50 + (progress * 40 * Math.sin(bearing * Math.PI / 180));
+                const screenY = 70 - (progress * 40 * Math.cos(bearing * Math.PI / 180));
+                
+                // Create path point
+                const point = document.createElement('div');
+                point.className = 'path-point';
+                point.style.left = `${screenX}%`;
+                point.style.top = `${screenY}%`;
+                arPath.appendChild(point);
+                
+                // Create distance marker every 3 points
+                if (i % 3 === 0) {
+                    const marker = document.createElement('div');
+                    marker.className = 'distance-marker';
+                    marker.style.left = `${screenX}%`;
+                    marker.style.top = `${screenY - 5}%`;
+                    marker.textContent = `${Math.round(distance * progress)}m`;
+                    arPath.appendChild(marker);
+                }
+                
+                // Create connecting lines
+                if (i > 1) {
+                    const prevPoint = arPathPoints[arPathPoints.length - 1];
+                    const lineLength = Math.sqrt(
+                        Math.pow(screenX - prevPoint.x, 2) + 
+                        Math.pow(screenY - prevPoint.y, 2)
+                    );
+                    const lineAngle = Math.atan2(
+                        screenY - prevPoint.y, 
+                        screenX - prevPoint.x
+                    ) * 180 / Math.PI;
+                    
+                    const line = document.createElement('div');
+                    line.className = 'path-line';
+                    line.style.left = `${prevPoint.x}%`;
+                    line.style.top = `${prevPoint.y}%`;
+                    line.style.width = `${lineLength}%`;
+                    line.style.transform = `rotate(${lineAngle}deg)`;
+                    arPath.appendChild(line);
+                }
+                
+                // Save point for next iteration
+                arPathPoints.push({ x: screenX, y: screenY });
+            }
+        }
+
         function switchCamera() {
             isUsingBackCamera = !isUsingBackCamera;
             startARCamera();
@@ -1554,6 +1965,240 @@
             stopARCamera();
             arNavigationScreen.classList.remove('active');
             findScreen.classList.add('active');
+        }
+
+        // Auto-Park Detection
+        function startAutoParkDetection() {
+            if (!navigator.geolocation) return;
+            
+            let lastPosition = null;
+            let stationaryCount = 0;
+            
+            autoParkWatchId = navigator.geolocation.watchPosition(
+                (position) => {
+                    const currentPos = {
+                        lat: position.coords.latitude,
+                        lng: position.coords.longitude,
+                        accuracy: position.coords.accuracy
+                    };
+                    
+                    if (lastPosition) {
+                        const distance = calculateDistance(
+                            lastPosition.lat, lastPosition.lng,
+                            currentPos.lat, currentPos.lng
+                        );
+                        
+                        // If user has been stationary for 3 consecutive readings
+                        if (distance < 10) {
+                            stationaryCount++;
+                            
+                            if (stationaryCount >= 3 && parkingData.length === 0) {
+                                // Auto-save parking location
+                                autoSaveParkingLocation(currentPos);
+                                stationaryCount = 0;
+                            }
+                        } else {
+                            stationaryCount = 0;
+                        }
+                    }
+                    
+                    lastPosition = currentPos;
+                },
+                (error) => {
+                    console.error('Auto-park detection error:', error);
+                },
+                {
+                    enableHighAccuracy: true,
+                    timeout: 10000,
+                    maximumAge: 0
+                }
+            );
+        }
+
+        function stopAutoParkDetection() {
+            if (autoParkWatchId) {
+                navigator.geolocation.clearWatch(autoParkWatchId);
+                autoParkWatchId = null;
+            }
+        }
+
+        function autoSaveParkingLocation(location) {
+            const now = new Date();
+            const parkingRecord = {
+                id: Date.now(),
+                lat: location.lat,
+                lng: location.lng,
+                accuracy: location.accuracy,
+                accuracyLevel: location.accuracy <= 20 ? 'high' : 
+                             location.accuracy <= 50 ? 'medium' : 'low',
+                note: `Auto-detected parking (${Math.round(location.accuracy)}m accuracy)`,
+                timestamp: now.toISOString(),
+                displayTime: now.toLocaleString(),
+                photo: null,
+                autoDetected: true
+            };
+            
+            parkingData.unshift(parkingRecord);
+            localStorage.setItem('parkingData', JSON.stringify(parkingData));
+            
+            // Show notification
+            showNotification('Auto-Park detected your parking location!', 'success');
+            
+            // Update UI
+            updateParkingHistory();
+            updateFindButton();
+        }
+
+        // Smart Reminders
+        function checkSmartReminders() {
+            if (!smartRemindersEnabled || !currentParking) return;
+            
+            const remindersList = document.getElementById('reminders-list');
+            const remindersSection = document.getElementById('smart-reminders-section');
+            remindersList.innerHTML = '';
+            
+            const now = new Date();
+            const parkTime = new Date(currentParking.timestamp);
+            const timeDiff = (now - parkTime) / (1000 * 60); // minutes
+            
+            // Time-based reminders
+            if (timeDiff > 120) { // 2 hours
+                addReminder('⏰ mohsan You parked over 2 hours ago', 'bike Dekh jaa k', 'warning');
+            }
+            
+            if (timeDiff > 360) { // 6 hours
+                addReminder('🚨 MOhsan Long parking duration', 'Your vehicle has been parked for 6+ hours', 'danger');
+            }
+            
+            // Day-based reminders (simplified)
+            const dayOfWeek = now.getDay();
+            if (dayOfWeek === 1 || dayOfWeek === 3) { // Monday or Wednesday
+                addReminder('🧹 Street cleaning alert', 'Check for street cleaning restrictions in this area', 'warning');
+            }
+            
+            // Show reminders section if there are any
+            if (remindersList.children.length > 0) {
+                remindersSection.style.display = 'block';
+            } else {
+                remindersSection.style.display = 'none';
+            }
+        }
+
+        function addReminder(title, message, type) {
+            const remindersList = document.getElementById('reminders-list');
+            
+            const reminder = document.createElement('div');
+            reminder.className = `notification ${type}`;
+            reminder.innerHTML = `
+                <i class="fas fa-${type === 'warning' ? 'exclamation-triangle' : type === 'danger' ? 'exclamation-circle' : 'info-circle'}"></i>
+                <div>
+                    <div style="font-weight: 600;">${title}</div>
+                    <div style="font-size: 12px;">${message}</div>
+                </div>
+            `;
+            
+            remindersList.appendChild(reminder);
+        }
+
+        // Offline Maps
+        function showOfflineMapsScreen() {
+            homeScreen.classList.remove('active');
+            offlineMapsScreen.classList.add('active');
+        }
+
+        function downloadCurrentArea() {
+            const downloadBtn = document.getElementById('download-current-btn');
+            const progressBar = document.getElementById('download-progress-bar');
+            const progressContainer = document.getElementById('download-progress');
+            const status = document.getElementById('download-status');
+            
+            downloadBtn.disabled = true;
+            downloadBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Downloading...';
+            progressContainer.style.display = 'block';
+            
+            let progress = 0;
+            const interval = setInterval(() => {
+                progress += 5;
+                progressBar.style.width = `${progress}%`;
+                
+                if (progress >= 100) {
+                    clearInterval(interval);
+                    
+                    // Save downloaded map
+                    const mapArea = {
+                        id: Date.now(),
+                        name: 'Current Area',
+                        downloadedAt: new Date().toISOString(),
+                        radius: 5 // km
+                    };
+                    
+                    downloadedMaps.push(mapArea);
+                    localStorage.setItem('downloadedMaps', JSON.stringify(downloadedMaps));
+                    
+                    status.textContent = '✅ Download complete!';
+                    downloadBtn.innerHTML = '<i class="fas fa-check"></i> Downloaded';
+                    
+                    // Update downloaded maps list
+                    updateDownloadedMapsList();
+                    
+                    // Show offline mode available
+                    offlineMapsEnabled = true;
+                }
+            }, 200);
+        }
+
+        function updateDownloadedMapsList() {
+            const mapsList = document.getElementById('downloaded-maps-list');
+            
+            if (downloadedMaps.length === 0) {
+                mapsList.innerHTML = `
+                    <div class="empty-state" style="padding: 20px;">
+                        <i class="fas fa-map" style="font-size: 30px;"></i>
+                        <div>No maps downloaded yet</div>
+                    </div>
+                `;
+                return;
+            }
+            
+            let mapsHTML = '';
+            downloadedMaps.forEach(map => {
+                const date = new Date(map.downloadedAt).toLocaleDateString();
+                mapsHTML += `
+                    <div class="setting-item">
+                        <div>
+                            <div style="font-weight: 600;">${map.name}</div>
+                            <div style="font-size: 12px; color: #7f8c8d;">Downloaded: ${date}</div>
+                        </div>
+                        <button class="action-btn" style="padding: 6px 10px; font-size: 12px; background: #e74c3c;" 
+                                onclick="deleteMap(${map.id})">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                `;
+            });
+            
+            mapsList.innerHTML = mapsHTML;
+        }
+
+        function deleteMap(id) {
+            downloadedMaps = downloadedMaps.filter(map => map.id !== id);
+            localStorage.setItem('downloadedMaps', JSON.stringify(downloadedMaps));
+            updateDownloadedMapsList();
+            
+            if (downloadedMaps.length === 0) {
+                offlineMapsEnabled = false;
+            }
+        }
+
+        // Connectivity Check
+        function checkConnectivity() {
+            const offlineIndicator = document.getElementById('offline-mode-indicator');
+            
+            if (!navigator.onLine) {
+                offlineIndicator.style.display = 'flex';
+            } else {
+                offlineIndicator.style.display = 'none';
+            }
         }
 
         // Save parking location
@@ -1637,6 +2282,7 @@
                             <div class="location-time">${parking.displayTime}</div>
                             <div style="font-size: 11px; color: #7f8c8d;">
                                 <span class="accuracy-badge ${accuracyBadge}" style="font-size: 10px; padding: 2px 6px;">${accuracyText} Precision</span>
+                                ${parking.autoDetected ? '<span style="color: #3498db; margin-left: 5px;">(Auto)</span>' : ''}
                             </div>
                         </div>
                         <div class="status-indicator" style="background: ${isCurrent ? '#27ae60' : '#95a5a6'};"></div>
@@ -1688,6 +2334,7 @@
                             <div><strong>Note:</strong> ${parking.note}</div>
                             <div><strong>Time:</strong> ${parking.displayTime}</div>
                             <div><strong>Accuracy:</strong> ${Math.round(parking.accuracy)} meters</div>
+                            ${parking.autoDetected ? '<div><strong>Detected:</strong> Automatically</div>' : ''}
                         </div>
                     `;
                     findScreen.classList.remove('active');
@@ -1724,6 +2371,7 @@
                             </div>
                             <div style="margin-top: 10px; font-size: 12px; color: #7f8c8d;">
                                 Location accuracy: ${Math.round(parking.accuracy)} meters
+                                ${parking.autoDetected ? '<br>Automatically detected' : ''}
                             </div>
                         </div>
                     `;
@@ -1844,6 +2492,29 @@
             }
         }
 
+        function showNotification(message, type = 'info') {
+            // Create notification element
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.style.position = 'fixed';
+            notification.style.top = '20px';
+            notification.style.left = '50%';
+            notification.style.transform = 'translateX(-50%)';
+            notification.style.zIndex = '1000';
+            notification.style.maxWidth = '90%';
+            notification.innerHTML = `
+                <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'warning' ? 'exclamation-triangle' : 'info-circle'}"></i>
+                <div>${message}</div>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            // Remove after 3 seconds
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+
         // PWA Installation
         function setupPWA() {
             let deferredPrompt;
@@ -1871,6 +2542,10 @@
             dismissBtn.addEventListener('click', () => {
                 installPrompt.style.display = 'none';
             });
+
+            // Listen for online/offline status
+            window.addEventListener('online', checkConnectivity);
+            window.addEventListener('offline', checkConnectivity);
         }
 
         // Initialize the app when loaded
