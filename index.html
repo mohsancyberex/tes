@@ -5,9 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ParkFinder - By Mohsan cyberEx</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <!-- Add Google Maps API -->
-    <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY_HERE&libraries=places,geometry,visualization"></script>
+    <!-- Replace YOUR_GOOGLE_MAPS_API_KEY with your actual API key -->
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDp5x3loYHEncdxXnAw0SJqgQCuUesAFV0&libraries=places,geometry"></script>
     <style>
         * {
             margin: 0;
@@ -1156,7 +1155,7 @@
         <!-- Navigation Screen -->
         <div id="navigation-screen" class="screen">
             <header>
-                <button class="back-btn" id="back-from-nav">
+                <button class="back-btn" id="back-from-navigation">
                     <i class="fas fa-arrow-left"></i> Back
                 </button>
                 <div class="logo">Navigation</div>
@@ -1165,46 +1164,47 @@
             <div class="main-content">
                 <div id="nav-map" class="map-placeholder">
                     <i class="fas fa-route" style="font-size: 40px; margin-bottom: 10px; color: #3498db;"></i>
-                    <span>Route to your vehicle will appear here</span>
+                    <span>Navigation route will appear here</span>
                 </div>
                 
-                <div class="compass-mode">
+                <div class="nav-info">
+                    <div class="nav-stats">
+                        <div>
+                            <div style="font-size: 12px; color: #7f8c8d;">Distance</div>
+                            <div style="font-weight: 600; font-size: 18px;" id="nav-distance">--</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 12px; color: #7f8c8d;">Time</div>
+                            <div style="font-weight: 600; font-size: 18px;" id="nav-time">--</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 12px; color: #7f8c8d;">ETA</div>
+                            <div style="font-weight: 600; font-size: 18px;" id="nav-eta">--</div>
+                        </div>
+                    </div>
+                    
+                    <div class="nav-instruction" id="nav-instruction">
+                        Calculating route to your vehicle...
+                    </div>
+                </div>
+                
+                <div class="compass-mode" id="compass-mode" style="display: none;">
                     <i class="fas fa-compass compass-icon"></i>
-                    <span>Follow the direction to your vehicle</span>
+                    <span>Compass Mode: Point your phone towards the destination</span>
                 </div>
                 
-                <div id="navigation-info">
-                    <div class="nav-info">
-                        <div class="nav-stats">
-                            <span>Distance to vehicle:</span>
-                            <span style="font-weight: 600;">-- meters</span>
-                        </div>
-                        <div class="nav-stats">
-                            <span>Estimated time:</span>
-                            <span style="font-weight: 600;">-- minutes</span>
-                        </div>
-                        <div class="nav-instruction">
-                            <i class="fas fa-walking"></i> Start walking toward your vehicle location
-                        </div>
-                    </div>
+                <div class="route-details" id="route-details">
+                    <!-- Route steps will be populated here -->
                 </div>
-
-                <!-- Offline Mode Indicator -->
-                <div id="offline-mode-indicator" class="notification" style="display: none;">
-                    <i class="fas fa-wifi-slash"></i>
-                    <div>
-                        <div style="font-weight: 600;">Offline Mode</div>
-                        <div style="font-size: 12px;">Using downloaded maps for navigation</div>
-                    </div>
-                </div>
+                
+                <button class="action-btn nav-btn" id="stop-navigation-btn" style="width: 100%;">
+                    <i class="fas fa-stop-circle"></i>
+                    Stop Navigation
+                </button>
             </div>
-            
-            <footer>
-                Follow the on-screen directions to your vehicle
-            </footer>
         </div>
-
-        <!-- Augmented Reality Navigation Screen -->
+        
+        <!-- AR Navigation Screen -->
         <div id="ar-navigation-screen" class="screen">
             <header>
                 <button class="back-btn" id="back-from-ar">
@@ -1217,55 +1217,40 @@
                 <div class="ar-container">
                     <video id="ar-camera-preview" autoplay playsinline></video>
                     <div class="ar-overlay">
-                        <!-- Enhanced AR Direction -->
-                        <div class="ar-direction-enhanced" id="ar-direction-enhanced">
-                            <div class="direction-3d" id="direction-3d">↑</div>
-                            <div class="vehicle-distance" id="vehicle-distance">-- m</div>
-                            <div class="direction-hints" id="direction-hints">
-                                Point camera toward your vehicle
-                            </div>
+                        <div class="ar-direction">
+                            <div class="direction-arrow">↑</div>
+                            <div class="direction-distance" id="ar-distance">-- m</div>
                         </div>
-                        
-                        <!-- AR Path Drawing -->
-                        <div class="ar-path" id="ar-path">
-                            <!-- Path elements will be dynamically added here -->
+                        <div class="ar-guidance" id="ar-guidance">
+                            Point your camera towards your vehicle
                         </div>
-                        
                         <div class="compass-rose">
                             <div class="compass-needle" id="compass-needle"></div>
-                            <span id="compass-degree">0°</span>
+                            N
                         </div>
-                        
                         <div class="plate-scanning" id="plate-scanning" style="display: none;">
-                            <i class="fas fa-search"></i> Scanning for number plate...
+                            <i class="fas fa-search"></i> Scanning for number plates...
                         </div>
                     </div>
+                    <div class="ar-path" id="ar-path"></div>
                 </div>
-
+                
                 <div class="ar-controls">
-                    <button class="ar-control-btn" onclick="toggleARPath()" id="toggle-path-btn">
-                        <i class="fas fa-route"></i> Show Path
+                    <button class="ar-control-btn" id="toggle-compass-btn">
+                        <i class="fas fa-compass"></i> Toggle Compass
                     </button>
-                    <button class="ar-control-btn" onclick="switchCamera()">
-                        <i class="fas fa-sync-alt"></i> Switch Camera
-                    </button>
-                    <button class="ar-control-btn exit" onclick="exitARNavigation()">
+                    <button class="ar-control-btn exit" id="exit-ar-btn">
                         <i class="fas fa-times"></i> Exit AR
                     </button>
                 </div>
-
-                <div style="background: #f8f9fa; padding: 15px; border-radius: 10px; margin-top: 15px;">
-                    <h4 style="margin-bottom: 10px; color: #2c3e50;">🎯 AR Navigation Tips</h4>
-                    <ul style="font-size: 14px; color: #7f8c8d; padding-left: 20px;">
-                        <li>Hold phone steady for better direction accuracy</li>
-                        <li>Follow the arrow direction to your vehicle</li>
-                        <li>Blue path shows the route to your vehicle</li>
-                        <li>Distance updates in real-time as you move</li>
-                    </ul>
+                
+                <div class="notification" id="ar-notification">
+                    <i class="fas fa-info-circle"></i>
+                    <span>Move your phone to detect your vehicle direction</span>
                 </div>
             </div>
         </div>
-
+        
         <!-- Offline Maps Screen -->
         <div id="offline-maps-screen" class="screen">
             <header>
@@ -1280,571 +1265,700 @@
                     <h4 style="margin-bottom: 15px; color: #2c3e50;">
                         <i class="fas fa-download"></i> Download Maps for Offline Use
                     </h4>
+                    <p style="margin-bottom: 15px; font-size: 14px;">
+                        Download maps of your current area to use when you don't have internet connection.
+                    </p>
                     
-                    <div class="setting-item">
-                        <div>
-                            <div style="font-weight: 600;">Current Area</div>
-                            <div style="font-size: 12px; color: #7f8c8d;">5km radius around your location</div>
-                        </div>
-                        <button class="action-btn" style="padding: 8px 12px; font-size: 14px;" onclick="downloadCurrentArea()" id="download-current-btn">
-                            <i class="fas fa-download"></i> Download
-                        </button>
+                    <div style="margin-bottom: 15px;">
+                        <label style="display: block; margin-bottom: 8px; font-weight: 600;">Map Area Radius</label>
+                        <select id="map-radius" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ddd;">
+                            <option value="1">1 km radius</option>
+                            <option value="2" selected>2 km radius</option>
+                            <option value="5">5 km radius</option>
+                            <option value="10">10 km radius</option>
+                        </select>
                     </div>
                     
-                    <div class="download-progress" id="download-progress" style="display: none;">
+                    <div class="download-progress">
                         <div class="download-progress-bar" id="download-progress-bar"></div>
                     </div>
-                    <div id="download-status" style="text-align: center; font-size: 12px; margin-top: 5px;"></div>
+                    <div style="text-align: center; font-size: 12px; color: #7f8c8d;" id="download-status">
+                        Ready to download
+                    </div>
+                    
+                    <button class="action-btn" id="download-map-btn" style="width: 100%; margin-top: 15px;">
+                        <i class="fas fa-download"></i> Download Map Area
+                    </button>
                 </div>
                 
-                <div class="settings-section">
-                    <div class="section-title">Downloaded Maps</div>
-                    <div id="downloaded-maps-list">
-                        <div class="empty-state" style="padding: 20px;">
-                            <i class="fas fa-map" style="font-size: 30px;"></i>
-                            <div>No maps downloaded yet</div>
-                        </div>
+                <div class="section-title">Downloaded Maps</div>
+                <div id="downloaded-maps-list">
+                    <div class="empty-state">
+                        <i class="fas fa-map" style="font-size: 40px;"></i>
+                        <div>No maps downloaded yet</div>
                     </div>
-                </div>
-                
-                <div class="notification">
-                    <i class="fas fa-info-circle"></i>
-                    <div>
-                        <div style="font-weight: 600;">Offline Navigation</div>
-                        <div style="font-size: 12px;">Download maps for navigation without internet connection</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Photo View Screen -->
-        <div id="photo-screen" class="screen">
-            <header>
-                <button class="back-btn" id="back-from-photo">
-                    <i class="fas fa-arrow-left"></i> Back
-                </button>
-                <div class="logo">Parking Photo</div>
-            </header>
-            
-            <div class="main-content" style="text-align: center;">
-                <img id="full-size-photo" src="" style="max-width: 100%; border-radius: 10px; margin-bottom: 15px;">
-                <div id="photo-info">
-                    <!-- Photo details will be loaded here -->
                 </div>
             </div>
         </div>
     </div>
-
-    <!-- PWA Install Prompt -->
+    
+    <!-- PWA Installation Prompt -->
     <div class="install-prompt" id="install-prompt">
-        Install ParkFinder for better experience?
-        <button class="install-btn" id="install-btn">Install</button>
-        <button class="install-btn" style="background: #95a5a6;" id="dismiss-install">Later</button>
+        <span>Install ParkFinder for better experience?</span>
+        <button class="install-btn" id="install-app-btn">Install</button>
     </div>
 
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <!-- Add Tesseract.js for free OCR -->
-    <script src="https://unpkg.com/tesseract.js@v2.1.5/dist/tesseract.min.js"></script>
     <script>
-        // Enhanced GPS with high-precision calibration
-        let parkingData = JSON.parse(localStorage.getItem('parkingData')) || [];
+        // Global variables
         let currentLocation = null;
-        let maps = {};
-        let currentParking = null;
-        let cameraStream = null;
-        let currentPhoto = null;
-        
-        // High accuracy GPS variables
-        let accuracyMode = 'high';
-        let calibrationInterval;
-        let bestAccuracy = 1000;
-        let calibrationAttempts = 0;
+        let parkingLocation = null;
+        let currentAccuracyMode = 'high';
         let watchId = null;
-
-        // Augmented Reality Navigation Variables
-        let arCameraStream = null;
-        let isUsingBackCamera = true;
-        let compassPermission = false;
-        let arUpdateInterval = null;
-        let currentHeading = 0;
-        let showARPath = false;
-        let arPathPoints = [];
-
-        // Smart Features
+        let cameraStream = null;
+        let photoData = null;
+        let plateData = null;
+        let parkingHistory = [];
+        let route = null;
+        let currentStep = 0;
+        let compassHeading = 0;
+        let isNavigating = false;
+        let isARActive = false;
         let autoParkEnabled = true;
         let smartRemindersEnabled = true;
-        let offlineMapsEnabled = false;
-        let downloadedMaps = JSON.parse(localStorage.getItem('downloadedMaps')) || [];
-        let autoParkWatchId = null;
-
-        // Enhanced Features
-        let numberPlateImage = null;
-        let plateRecognitionActive = false;
-        let lastDistance = 0;
-        let vehicleDirection = 'front';
-        let googleMapsService = null;
-
-        // DOM Elements
-        const homeScreen = document.getElementById('home-screen');
-        const parkScreen = document.getElementById('park-screen');
-        const findScreen = document.getElementById('find-screen');
-        const navigationScreen = document.getElementById('navigation-screen');
-        const arNavigationScreen = document.getElementById('ar-navigation-screen');
-        const offlineMapsScreen = document.getElementById('offline-maps-screen');
-        const photoScreen = document.getElementById('photo-screen');
-        const findVehicleBtn = document.getElementById('find-vehicle-btn');
-        const saveParkingBtn = document.getElementById('save-parking-btn');
-
+        let offlineMaps = [];
+        
         // Initialize the app
-        function initApp() {
-            updateParkingHistory();
-            updateFindButton();
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeApp();
             setupEventListeners();
-            setupCamera();
-            setupPWA();
-            setupARNavigation();
-            setupSmartFeatures();
-            checkConnectivity();
-            initGoogleMaps();
-        }
-
-        // Initialize Google Maps Service
-        function initGoogleMaps() {
-            if (typeof google !== 'undefined') {
-                googleMapsService = new GoogleMapsService();
-                console.log('✅ Google Maps loaded successfully!');
-            } else {
-                console.log('⚠️ Google Maps not available, using free alternatives');
-                // Fallback to free services
-                initFreeMapsService();
+            loadParkingHistory();
+            checkPWAInstallation();
+        });
+        
+        function initializeApp() {
+            // Initialize maps
+            initializeHomeMap();
+            
+            // Check if we have a saved parking location
+            const savedParking = localStorage.getItem('parkingLocation');
+            if (savedParking) {
+                parkingLocation = JSON.parse(savedParking);
+                updateParkingHistoryDisplay();
+            }
+            
+            // Check if auto-park is enabled
+            const autoParkSetting = localStorage.getItem('autoParkEnabled');
+            if (autoParkSetting !== null) {
+                autoParkEnabled = autoParkSetting === 'true';
+                document.getElementById('auto-park-toggle').checked = autoParkEnabled;
+                updateAutoParkStatus();
+            }
+            
+            // Check if smart reminders are enabled
+            const remindersSetting = localStorage.getItem('smartRemindersEnabled');
+            if (remindersSetting !== null) {
+                smartRemindersEnabled = remindersSetting === 'true';
+                document.getElementById('smart-reminders-toggle').checked = smartRemindersEnabled;
+                updateRemindersStatus();
+            }
+            
+            // Load offline maps
+            const savedMaps = localStorage.getItem('offlineMaps');
+            if (savedMaps) {
+                offlineMaps = JSON.parse(savedMaps);
+                updateOfflineMapsDisplay();
+            }
+            
+            // Start location tracking if auto-park is enabled
+            if (autoParkEnabled) {
+                startLocationTracking();
             }
         }
-
-        // Google Maps Service
-        class GoogleMapsService {
-            constructor() {
-                this.geocoder = new google.maps.Geocoder();
-                this.directionsService = new google.maps.DirectionsService();
-                this.directionsRenderer = new google.maps.DirectionsRenderer();
-                this.initHomeMap();
-            }
-
-            initHomeMap() {
-                const homeMapElement = document.getElementById('home-map');
-                if (homeMapElement && parkingData.length > 0) {
-                    const lastParking = parkingData[0];
-                    this.map = new google.maps.Map(homeMapElement, {
-                        zoom: 15,
-                        center: { lat: lastParking.lat, lng: lastParking.lng },
-                        mapTypeControl: false,
-                        streetViewControl: false
-                    });
-                    
-                    new google.maps.Marker({
-                        position: { lat: lastParking.lat, lng: lastParking.lng },
-                        map: this.map,
-                        title: 'Your Vehicle',
-                        icon: {
-                            url: 'data:image/svg+xml;base64,' + btoa(`
-                                <svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
-                                    <circle cx="16" cy="16" r="14" fill="#e74c3c" stroke="#fff" stroke-width="2"/>
-                                    <text x="16" y="21" text-anchor="middle" fill="white" font-size="12">🚗</text>
-                                </svg>
-                            `),
-                            scaledSize: new google.maps.Size(32, 32)
+        
+        function setupEventListeners() {
+            // Navigation between screens
+            document.getElementById('park-here-btn').addEventListener('click', showParkScreen);
+            document.getElementById('find-vehicle-btn').addEventListener('click', showFindScreen);
+            document.getElementById('back-from-park').addEventListener('click', showHomeScreen);
+            document.getElementById('back-from-find').addEventListener('click', showHomeScreen);
+            document.getElementById('back-from-navigation').addEventListener('click', showFindScreen);
+            document.getElementById('back-from-ar').addEventListener('click', showFindScreen);
+            document.getElementById('back-from-offline').addEventListener('click', showHomeScreen);
+            
+            // Parking actions
+            document.getElementById('save-parking-btn').addEventListener('click', saveParkingLocation);
+            document.getElementById('start-navigation-btn').addEventListener('click', startNavigation);
+            document.getElementById('start-ar-navigation-btn').addEventListener('click', startARNavigation);
+            document.getElementById('stop-navigation-btn').addEventListener('click', stopNavigation);
+            document.getElementById('exit-ar-btn').addEventListener('click', exitARNavigation);
+            document.getElementById('toggle-compass-btn').addEventListener('click', toggleCompass);
+            
+            // Camera controls
+            document.getElementById('start-camera-btn').addEventListener('click', startCamera);
+            document.getElementById('capture-btn').addEventListener('click', capturePhoto);
+            document.getElementById('retake-btn').addEventListener('click', retakePhoto);
+            document.getElementById('view-photo-btn').addEventListener('click', viewParkingPhoto);
+            
+            // Settings toggles
+            document.getElementById('auto-park-toggle').addEventListener('change', toggleAutoPark);
+            document.getElementById('smart-reminders-toggle').addEventListener('change', toggleSmartReminders);
+            
+            // Offline maps
+            document.getElementById('download-map-btn').addEventListener('click', downloadOfflineMap);
+            
+            // PWA installation
+            document.getElementById('install-app-btn').addEventListener('click', installPWA);
+            
+            // Device orientation for AR navigation
+            window.addEventListener('deviceorientation', handleDeviceOrientation);
+        }
+        
+        // Screen navigation functions
+        function showHomeScreen() {
+            hideAllScreens();
+            document.getElementById('home-screen').classList.add('active');
+            updateHomeMap();
+        }
+        
+        function showParkScreen() {
+            hideAllScreens();
+            document.getElementById('park-screen').classList.add('active');
+            startHighPrecisionLocation();
+            initializeParkMap();
+        }
+        
+        function showFindScreen() {
+            hideAllScreens();
+            document.getElementById('find-screen').classList.add('active');
+            updateFindScreen();
+        }
+        
+        function showNavigationScreen() {
+            hideAllScreens();
+            document.getElementById('navigation-screen').classList.add('active');
+            initializeNavigation();
+        }
+        
+        function showARNavigationScreen() {
+            hideAllScreens();
+            document.getElementById('ar-navigation-screen').classList.add('active');
+            startARNavigation();
+        }
+        
+        function showOfflineMapsScreen() {
+            hideAllScreens();
+            document.getElementById('offline-maps-screen').classList.add('active');
+        }
+        
+        function hideAllScreens() {
+            const screens = document.querySelectorAll('.screen');
+            screens.forEach(screen => {
+                screen.classList.remove('active');
+            });
+        }
+        
+        // Location and GPS functions
+        function startLocationTracking() {
+            if (navigator.geolocation) {
+                watchId = navigator.geolocation.watchPosition(
+                    position => {
+                        currentLocation = {
+                            lat: position.coords.latitude,
+                            lng: position.coords.longitude,
+                            accuracy: position.coords.accuracy
+                        };
+                        
+                        // Auto-save parking if enabled and we've moved significantly
+                        if (autoParkEnabled && parkingLocation) {
+                            const distance = calculateDistance(
+                                currentLocation.lat, currentLocation.lng,
+                                parkingLocation.lat, parkingLocation.lng
+                            );
+                            
+                            if (distance > 100) { // 100 meters threshold
+                                // We've moved significantly, auto-save new location
+                                saveParkingLocationAutomatically();
+                            }
                         }
-                    });
-                }
-            }
-
-            async reverseGeocode(lat, lng) {
-                return new Promise((resolve, reject) => {
-                    this.geocoder.geocode({ location: { lat, lng } }, (results, status) => {
-                        if (status === 'OK' && results[0]) {
-                            resolve({
-                                address: results[0].formatted_address,
-                                street: this.extractStreet(results[0]),
-                                city: this.extractCity(results[0]),
-                                placeId: results[0].place_id
-                            });
-                        } else {
-                            reject('Geocoding failed: ' + status);
-                        }
-                    });
-                });
-            }
-
-            extractStreet(result) {
-                const streetComponent = result.address_components.find(component => 
-                    component.types.includes('route')
-                );
-                return streetComponent ? streetComponent.long_name : 'Unknown Street';
-            }
-
-            extractCity(result) {
-                const cityComponent = result.address_components.find(component => 
-                    component.types.includes('locality')
-                );
-                return cityComponent ? cityComponent.long_name : 'Unknown City';
-            }
-        }
-
-        // Free Maps Service (Fallback)
-        class FreeMapsService {
-            constructor() {
-                this.nominatimUrl = 'https://nominatim.openstreetmap.org/reverse';
-            }
-
-            async reverseGeocode(lat, lng) {
-                try {
-                    const response = await fetch(
-                        `${this.nominatimUrl}?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`
-                    );
-                    const data = await response.json();
-                    
-                    return {
-                        address: data.display_name,
-                        street: data.address?.road || 'Unknown road',
-                        city: data.address?.city || data.address?.town || '',
-                    };
-                } catch (error) {
-                    return { address: 'Address not available', street: 'Unknown', city: '' };
-                }
-            }
-        }
-
-        // Free High Accuracy GPS with Sensor Fusion
-        class FreeHighAccuracyGPS {
-            constructor() {
-                this.watchId = null;
-                this.lastPositions = [];
-                this.kalmanState = null;
-            }
-
-            startEnhancedTracking(callback) {
-                this.watchId = navigator.geolocation.watchPosition(
-                    (position) => this.handlePosition(position, callback),
-                    (error) => console.error('GPS error:', error),
+                    },
+                    error => {
+                        console.error('Error getting location:', error);
+                    },
                     {
                         enableHighAccuracy: true,
                         timeout: 10000,
-                        maximumAge: 0,
-                        distanceFilter: 1
+                        maximumAge: 60000
                     }
                 );
             }
-
-            handlePosition(position, callback) {
-                const newPosition = {
-                    lat: position.coords.latitude,
-                    lng: position.coords.longitude,
-                    accuracy: position.coords.accuracy,
-                    timestamp: Date.now()
-                };
-
-                this.lastPositions.push(newPosition);
-                if (this.lastPositions.length > 5) {
-                    this.lastPositions.shift();
-                }
-
-                const filteredPosition = this.applyKalmanFilter(newPosition);
-                const bestPosition = this.chooseBestPosition(filteredPosition);
-                
-                callback(bestPosition);
-            }
-
-            applyKalmanFilter(position) {
-                if (!this.kalmanState) {
-                    this.kalmanState = {
-                        lat: position.lat,
-                        lng: position.lng,
-                        variance: position.accuracy * position.accuracy
-                    };
-                }
-
-                const predictionVariance = this.kalmanState.variance + 0.1;
-                const kalmanGain = predictionVariance / (predictionVariance + position.accuracy);
-
-                return {
-                    lat: this.kalmanState.lat + kalmanGain * (position.lat - this.kalmanState.lat),
-                    lng: this.kalmanState.lng + kalmanGain * (position.lng - this.kalmanState.lng),
-                    accuracy: Math.sqrt((1 - kalmanGain) * predictionVariance)
-                };
-            }
-
-            chooseBestPosition(position) {
-                if (this.lastPositions.length >= 3) {
-                    return this.calculateWeightedAverage();
-                }
-                return position;
-            }
-
-            calculateWeightedAverage() {
-                let totalWeight = 0;
-                let weightedLat = 0;
-                let weightedLng = 0;
-
-                this.lastPositions.forEach(pos => {
-                    const weight = 1 / (pos.accuracy * pos.accuracy);
-                    weightedLat += pos.lat * weight;
-                    weightedLng += pos.lng * weight;
-                    totalWeight += weight;
-                });
-
-                return {
-                    lat: weightedLat / totalWeight,
-                    lng: weightedLng / totalWeight,
-                    accuracy: Math.sqrt(1 / totalWeight)
-                };
-            }
-
-            stopTracking() {
-                if (this.watchId) {
-                    navigator.geolocation.clearWatch(this.watchId);
-                }
-            }
         }
-
-        // Free OCR for Number Plate Recognition
-        class FreePlateRecognition {
-            constructor() {
-                this.worker = null;
-                this.initializeOCR();
-            }
-
-            async initializeOCR() {
-                try {
-                    this.worker = await Tesseract.createWorker('eng');
-                    await this.worker.setParameters({
-                        tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789- ',
-                        tessedit_pageseg_mode: '7'
-                    });
-                } catch (error) {
-                    console.error('OCR initialization failed:', error);
-                }
-            }
-
-            async recognizePlate(imageDataUrl) {
-                if (!this.worker) {
-                    await this.initializeOCR();
-                }
-
-                try {
-                    const { data: { text, confidence } } = await this.worker.recognize(imageDataUrl);
-                    const plateNumber = this.extractAndValidatePlate(text);
+        
+        function startHighPrecisionLocation() {
+            if (navigator.geolocation) {
+                // Reset UI
+                document.getElementById('gps-status-text').textContent = 'Calibrating high-precision GPS...';
+                document.getElementById('gps-status').className = 'gps-status';
+                document.getElementById('gps-status').classList.add('gps-loading');
+                document.getElementById('save-parking-btn').disabled = true;
+                document.getElementById('accuracy-value').textContent = '-- meters';
+                document.getElementById('accuracy-bar').style.width = '0%';
+                
+                let bestAccuracy = Number.MAX_VALUE;
+                let calibrationStartTime = Date.now();
+                let calibrationInterval = setInterval(() => {
+                    const elapsed = Date.now() - calibrationStartTime;
+                    const progress = Math.min(elapsed / 30000, 1); // 30 seconds max
                     
-                    return {
-                        success: !!plateNumber,
-                        plateNumber: plateNumber,
-                        confidence: confidence,
-                        rawText: text
-                    };
-                } catch (error) {
-                    return { success: false, error: error.message };
-                }
-            }
-
-            extractAndValidatePlate(text) {
-                const cleanText = text.replace(/[^A-Z0-9]/gi, '').toUpperCase();
-                
-                // Common license plate patterns
-                const patterns = [
-                    /^[A-Z]{2}[0-9]{1,2}[A-Z]{1,3}[0-9]{1,4}$/, // Indian format
-                    /^[A-Z]{1,3}[-\s]?[0-9]{1,4}$/, // US format
-                    /^[A-Z]{2}[0-9]{2}[A-Z]{3}$/, // UK format
-                    /^[A-Z0-9]{4,8}$/ // Generic
-                ];
-
-                for (let pattern of patterns) {
-                    if (pattern.test(cleanText)) {
-                        return cleanText;
+                    document.getElementById('accuracy-bar').style.width = `${progress * 100}%`;
+                    
+                    if (progress >= 1) {
+                        clearInterval(calibrationInterval);
+                        document.getElementById('calibration-tip').textContent = '✅ GPS calibration complete!';
+                        document.getElementById('save-parking-btn').disabled = false;
                     }
-                }
-
-                // Fallback: return the most plate-like substring
-                const matches = text.match(/[A-Z0-9]{4,8}/g);
-                return matches ? matches[0] : null;
+                }, 100);
+                
+                const highPrecisionWatchId = navigator.geolocation.watchPosition(
+                    position => {
+                        currentLocation = {
+                            lat: position.coords.latitude,
+                            lng: position.coords.longitude,
+                            accuracy: position.coords.accuracy
+                        };
+                        
+                        // Update accuracy display
+                        document.getElementById('accuracy-value').textContent = `${Math.round(position.coords.accuracy)} meters`;
+                        
+                        // Update GPS status based on accuracy
+                        if (position.coords.accuracy < 20) {
+                            document.getElementById('gps-status-text').textContent = 'High Precision GPS Active';
+                            document.getElementById('gps-status').className = 'gps-status';
+                            document.getElementById('gps-status').classList.add('gps-success');
+                        } else if (position.coords.accuracy < 50) {
+                            document.getElementById('gps-status-text').textContent = 'Good GPS Accuracy';
+                            document.getElementById('gps-status').className = 'gps-status';
+                            document.getElementById('gps-status').classList.add('gps-loading');
+                        } else {
+                            document.getElementById('gps-status-text').textContent = 'Poor GPS - Move to open area';
+                            document.getElementById('gps-status').className = 'gps-status';
+                            document.getElementById('gps-status').classList.add('gps-error');
+                        }
+                        
+                        // Update coordinates display
+                        document.getElementById('coordinates-text').textContent = 
+                            `${position.coords.latitude.toFixed(6)}, ${position.coords.longitude.toFixed(6)}`;
+                        document.getElementById('coordinates-display').style.display = 'block';
+                        
+                        // Update map with current location
+                        updateParkMap(position.coords.latitude, position.coords.longitude);
+                        
+                        // Track best accuracy for calibration
+                        if (position.coords.accuracy < bestAccuracy) {
+                            bestAccuracy = position.coords.accuracy;
+                        }
+                        
+                        // Check if we've reached the desired accuracy for the selected mode
+                        let targetAccuracy = 50; // Default for balanced mode
+                        if (currentAccuracyMode === 'high') targetAccuracy = 20;
+                        if (currentAccuracyMode === 'low') targetAccuracy = 100;
+                        
+                        if (position.coords.accuracy <= targetAccuracy && calibrationInterval) {
+                            clearInterval(calibrationInterval);
+                            document.getElementById('calibration-tip').textContent = '✅ GPS calibration complete!';
+                            document.getElementById('save-parking-btn').disabled = false;
+                        }
+                    },
+                    error => {
+                        console.error('Error getting high precision location:', error);
+                        document.getElementById('gps-status-text').textContent = 'GPS Error - Check permissions';
+                        document.getElementById('gps-status').className = 'gps-status';
+                        document.getElementById('gps-status').classList.add('gps-error');
+                        
+                        if (calibrationInterval) {
+                            clearInterval(calibrationInterval);
+                        }
+                    },
+                    {
+                        enableHighAccuracy: true,
+                        timeout: 5000,
+                        maximumAge: 0
+                    }
+                );
+                
+                // Stop high precision tracking when leaving the park screen
+                document.getElementById('back-from-park').addEventListener('click', function() {
+                    navigator.geolocation.clearWatch(highPrecisionWatchId);
+                    if (calibrationInterval) {
+                        clearInterval(calibrationInterval);
+                    }
+                }, { once: true });
             }
         }
-
-        // Initialize free services
-        function initFreeMapsService() {
-            googleMapsService = new FreeMapsService();
-        }
-
-        // Initialize plate recognition
-        const plateRecognition = new FreePlateRecognition();
-        const enhancedGPS = new FreeHighAccuracyGPS();
-
-        // Enhanced GPS calibration with free high accuracy
-        function startHighAccuracyCalibration() {
-            const gpsStatus = document.getElementById('gps-status');
-            gpsStatus.innerHTML = '<i class="fas fa-satellite-dish gps-loading"></i> Starting enhanced GPS calibration...';
+        
+        function selectAccuracyMode(mode) {
+            currentAccuracyMode = mode;
             
-            document.getElementById('calibration-progress').style.display = 'block';
-            saveParkingBtn.disabled = true;
-            bestAccuracy = 1000;
-            calibrationAttempts = 0;
-
-            enhancedGPS.startEnhancedTracking((position) => {
-                handleAccuratePosition(position);
+            // Update UI
+            document.querySelectorAll('.accuracy-option').forEach(option => {
+                option.classList.remove('active');
             });
+            document.getElementById(`${mode}-accuracy`).classList.add('active');
+            
+            // Update calibration tip based on mode
+            let tip = '';
+            if (mode === 'high') {
+                tip = '🔍 Moving to open area for best GPS signal...';
+            } else if (mode === 'medium') {
+                tip = '📡 Getting good GPS accuracy...';
+            } else {
+                tip = '⚡ Quick location capture...';
+            }
+            document.getElementById('calibration-tip').textContent = tip;
         }
-
-        // Enhanced AR Navigation with better directions
-        function updateEnhancedARDirection() {
-            if (!currentParking || !navigator.geolocation) return;
-
-            navigator.geolocation.getCurrentPosition(
-                (position) => {
-                    const userLat = position.coords.latitude;
-                    const userLng = position.coords.longitude;
-                    const accuracy = position.coords.accuracy;
-                    
-                    const vehicleLat = currentParking.lat;
-                    const vehicleLng = currentParking.lng;
-                    
-                    const distance = calculateDistance(userLat, userLng, vehicleLat, vehicleLng);
-                    const bearing = calculateBearing(userLat, userLng, vehicleLat, vehicleLng);
-                    
-                    updateEnhancedARDirectionDisplay(distance, bearing, userLat, userLng);
-                    updateARAccuracy(accuracy);
-                    
-                    if (showARPath) {
-                        updateARPath(userLat, userLng, vehicleLat, vehicleLng, distance, bearing);
-                    }
-                },
-                (error) => {
-                    console.error('GPS error in enhanced AR mode:', error);
-                },
-                { enableHighAccuracy: true, timeout: 5000 }
+        
+        // Map functions
+        function initializeHomeMap() {
+            // This would initialize the home screen map
+            // For demo purposes, we're using a placeholder
+        }
+        
+        function initializeParkMap() {
+            // This would initialize the parking screen map
+            // For demo purposes, we're using a placeholder
+        }
+        
+        function updateHomeMap() {
+            // Update home screen map with parking locations
+            const homeMap = document.getElementById('home-map');
+            if (parkingLocation) {
+                homeMap.innerHTML = `
+                    <div style="padding: 20px; text-align: center;">
+                        <i class="fas fa-map-marker-alt" style="font-size: 40px; margin-bottom: 10px; color: #e74c3c;"></i>
+                        <div style="font-weight: 600;">Your Vehicle Location</div>
+                        <div style="font-size: 14px; margin-top: 5px;">Saved ${formatTime(parkingLocation.timestamp)}</div>
+                    </div>
+                `;
+            }
+        }
+        
+        function updateParkMap(lat, lng) {
+            // Update parking screen map with current location
+            const parkMap = document.getElementById('park-map');
+            parkMap.innerHTML = `
+                <div style="padding: 20px; text-align: center;">
+                    <i class="fas fa-crosshairs" style="font-size: 40px; margin-bottom: 10px; color: #3498db;"></i>
+                    <div style="font-weight: 600;">Current Location</div>
+                    <div style="font-size: 14px; margin-top: 5px;">${lat.toFixed(6)}, ${lng.toFixed(6)}</div>
+                </div>
+            `;
+        }
+        
+        function updateFindScreen() {
+            // Update find screen with current parking info
+            const parkingInfo = document.getElementById('current-parking-info');
+            const viewPhotoBtn = document.getElementById('view-photo-btn');
+            const smartRemindersSection = document.getElementById('smart-reminders-section');
+            
+            if (parkingLocation) {
+                parkingInfo.innerHTML = `
+                    <div class="history-item">
+                        <div class="location-info">
+                            <div class="location-name">${parkingLocation.note || 'Parking Location'}</div>
+                            <div class="location-time">Saved ${formatTime(parkingLocation.timestamp)}</div>
+                            <div style="font-size: 12px; color: #7f8c8d; margin-top: 5px;">
+                                Accuracy: ${Math.round(parkingLocation.accuracy)} meters
+                            </div>
+                        </div>
+                        <div class="status-indicator"></div>
+                    </div>
+                `;
+                
+                // Show view photo button if photo exists
+                if (parkingLocation.photo) {
+                    viewPhotoBtn.style.display = 'block';
+                } else {
+                    viewPhotoBtn.style.display = 'none';
+                }
+                
+                // Show smart reminders if enabled
+                if (smartRemindersEnabled) {
+                    smartRemindersSection.style.display = 'block';
+                    updateSmartReminders();
+                } else {
+                    smartRemindersSection.style.display = 'none';
+                }
+                
+                // Update find map
+                const findMap = document.getElementById('find-map');
+                findMap.innerHTML = `
+                    <div style="padding: 20px; text-align: center;">
+                        <i class="fas fa-car" style="font-size: 40px; margin-bottom: 10px; color: #27ae60;"></i>
+                        <div style="font-weight: 600;">Your Vehicle Location</div>
+                        <div style="font-size: 14px; margin-top: 5px;">
+                            ${calculateDistanceFromCurrent()} away
+                        </div>
+                    </div>
+                `;
+            } else {
+                parkingInfo.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-car" style="color: #e74c3c;"></i>
+                        <div>No parking spot saved yet</div>
+                    </div>
+                `;
+                viewPhotoBtn.style.display = 'none';
+                smartRemindersSection.style.display = 'none';
+            }
+        }
+        
+        function initializeNavigation() {
+            if (!parkingLocation || !currentLocation) return;
+            
+            // Calculate route (simplified for demo)
+            const distance = calculateDistance(
+                currentLocation.lat, currentLocation.lng,
+                parkingLocation.lat, parkingLocation.lng
             );
+            
+            const time = Math.round(distance / 1.4); // Assuming walking speed of 1.4 m/s
+            
+            document.getElementById('nav-distance').textContent = `${Math.round(distance)} m`;
+            document.getElementById('nav-time').textContent = `${time} sec`;
+            document.getElementById('nav-eta').textContent = new Date(Date.now() + time * 1000).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            
+            // Simulate navigation steps
+            const steps = [
+                "Head north for 50 meters",
+                "Turn left onto Main Street",
+                "Continue for 100 meters",
+                "Your vehicle is on the right"
+            ];
+            
+            const routeDetails = document.getElementById('route-details');
+            routeDetails.innerHTML = '';
+            
+            steps.forEach((step, index) => {
+                const stepElement = document.createElement('div');
+                stepElement.className = 'step-item';
+                stepElement.textContent = `${index + 1}. ${step}`;
+                routeDetails.appendChild(stepElement);
+            });
+            
+            // Update navigation map
+            const navMap = document.getElementById('nav-map');
+            navMap.innerHTML = `
+                <div style="padding: 20px; text-align: center;">
+                    <i class="fas fa-route" style="font-size: 40px; margin-bottom: 10px; color: #3498db;"></i>
+                    <div style="font-weight: 600;">Navigation Active</div>
+                    <div style="font-size: 14px; margin-top: 5px;">Following route to your vehicle</div>
+                </div>
+            `;
+            
+            isNavigating = true;
+            document.getElementById('compass-mode').style.display = 'flex';
+            document.getElementById('nav-instruction').textContent = steps[0];
         }
-
-        function updateEnhancedARDirectionDisplay(distance, bearing, userLat, userLng) {
-            const direction3d = document.getElementById('direction-3d');
-            const vehicleDistance = document.getElementById('vehicle-distance');
-            const directionHints = document.getElementById('direction-hints');
-            const plateScanning = document.getElementById('plate-scanning');
-            
-            // Update distance with color coding
-            vehicleDistance.textContent = `${Math.round(distance)} m`;
-            if (distance < 10) {
-                vehicleDistance.style.background = 'rgba(39, 174, 96, 0.9)';
-                vehicleDistance.classList.add('vehicle-spotted');
-            } else if (distance < 30) {
-                vehicleDistance.style.background = 'rgba(243, 156, 18, 0.9)';
-                vehicleDistance.classList.remove('vehicle-spotted');
-            } else {
-                vehicleDistance.style.background = 'rgba(231, 76, 60, 0.9)';
-                vehicleDistance.classList.remove('vehicle-spotted');
-            }
-            
-            // Calculate vehicle direction
-            const relativeBearing = (bearing - currentHeading + 360) % 360;
-            determineVehiclePosition(relativeBearing, distance);
-            
-            // Update 3D direction and hints
-            update3DDirection(relativeBearing, direction3d);
-            updateDirectionHints(distance, directionHints);
-            
-            // Activate plate scanning when close
-            if (distance < 50) {
-                plateScanning.style.display = 'block';
-                plateRecognitionActive = true;
-            } else {
-                plateScanning.style.display = 'none';
-                plateRecognitionActive = false;
-            }
-            
-            lastDistance = distance;
-        }
-
-        function determineVehiclePosition(relativeBearing, distance) {
-            if (relativeBearing >= 315 || relativeBearing < 45) {
-                vehicleDirection = 'front';
-            } else if (relativeBearing >= 45 && relativeBearing < 135) {
-                vehicleDirection = 'right';
-            } else if (relativeBearing >= 135 && relativeBearing < 225) {
-                vehicleDirection = 'behind';
-            } else {
-                vehicleDirection = 'left';
-            }
-        }
-
-        function update3DDirection(relativeBearing, directionElement) {
-            if (relativeBearing >= 337.5 || relativeBearing < 22.5) {
-                directionElement.textContent = '↑';
-            } else if (relativeBearing >= 22.5 && relativeBearing < 67.5) {
-                directionElement.textContent = '↗';
-            } else if (relativeBearing >= 67.5 && relativeBearing < 112.5) {
-                directionElement.textContent = '→';
-            } else if (relativeBearing >= 112.5 && relativeBearing < 157.5) {
-                directionElement.textContent = '↘';
-            } else if (relativeBearing >= 157.5 && relativeBearing < 202.5) {
-                directionElement.textContent = '↓';
-            } else if (relativeBearing >= 202.5 && relativeBearing < 247.5) {
-                directionElement.textContent = '↙';
-            } else if (relativeBearing >= 247.5 && relativeBearing < 292.5) {
-                directionElement.textContent = '←';
-            } else {
-                directionElement.textContent = '↖';
-            }
-        }
-
-        function updateDirectionHints(distance, hintsElement) {
-            if (distance < 5) {
-                hintsElement.innerHTML = '🎉 <strong>Vehicle found!</strong> Your bike should be right here';
-                hintsElement.style.background = 'rgba(39, 174, 96, 0.9)';
-            } else if (distance < 15) {
-                hintsElement.innerHTML = `👀 <strong>Look ${vehicleDirection}</strong> - your bike is very close`;
-                hintsElement.style.background = 'rgba(243, 156, 18, 0.9)';
-            } else if (distance < 30) {
-                hintsElement.innerHTML = `🚗 <strong>Bike is ${vehicleDirection}</strong> - ${Math.round(distance)} meters away`;
-                hintsElement.style.background = 'rgba(52, 152, 219, 0.9)';
-            } else {
-                hintsElement.innerHTML = `📍 <strong>Walk ${vehicleDirection}</strong> - follow the arrow direction`;
-                hintsElement.style.background = 'rgba(52, 152, 219, 0.9)';
-            }
-        }
-
-        // Number Plate Recognition Functions
-        async function captureNumberPlate() {
-            const cameraPreview = document.getElementById('camera-preview');
-            const platePreview = document.getElementById('plate-preview');
-            
-            if (!cameraPreview.srcObject) {
-                alert('Please start camera first');
+        
+        // Parking functions
+        function saveParkingLocation() {
+            if (!currentLocation) {
+                alert('Unable to get your current location. Please try again.');
                 return;
             }
             
-            const canvas = document.getElementById('photo-canvas');
-            const context = canvas.getContext('2d');
-            canvas.width = cameraPreview.videoWidth;
-            canvas.height = cameraPreview.videoHeight;
-            context.drawImage(cameraPreview, 0, 0);
+            parkingLocation = {
+                lat: currentLocation.lat,
+                lng: currentLocation.lng,
+                accuracy: currentLocation.accuracy,
+                timestamp: Date.now(),
+                note: document.getElementById('parking-note').value || 'Parking Location',
+                photo: photoData,
+                plate: plateData
+            };
             
-            numberPlateImage = canvas.toDataURL('image/jpeg');
-            platePreview.innerHTML = `<img src="${numberPlateImage}" alt="Number Plate">`;
+            // Save to localStorage
+            localStorage.setItem('parkingLocation', JSON.stringify(parkingLocation));
             
-            // Recognize plate using free OCR
-            const result = await plateRecognition.recognizePlate(numberPlateImage);
+            // Add to history
+            addToParkingHistory(parkingLocation);
             
-            if (result.success) {
-                document.getElementById('plate-text').textContent = result.plateNumber;
-                document.getElementById('plate-result').style.display = 'block';
-                
-                if (currentLocation) {
-                    currentLocation.plateNumber = result.plateNumber;
-                    currentLocation.plateImage = numberPlateImage;
-                }
-            } else {
-                alert('Could not detect license plate. Please try again or enter manually.');
+            // Show confirmation
+            alert('Parking location saved successfully!');
+            
+            // Return to home screen
+            showHomeScreen();
+        }
+        
+        function saveParkingLocationAutomatically() {
+            if (!currentLocation) return;
+            
+            parkingLocation = {
+                lat: currentLocation.lat,
+                lng: currentLocation.lng,
+                accuracy: currentLocation.accuracy,
+                timestamp: Date.now(),
+                note: 'Auto-Saved Parking',
+                photo: null,
+                plate: null
+            };
+            
+            // Save to localStorage
+            localStorage.setItem('parkingLocation', JSON.stringify(parkingLocation));
+            
+            // Add to history
+            addToParkingHistory(parkingLocation);
+            
+            // Show notification
+            showNotification('Auto-Park: New parking location saved', 'success');
+        }
+        
+        function addToParkingHistory(parking) {
+            parkingHistory.unshift(parking);
+            
+            // Keep only last 10 entries
+            if (parkingHistory.length > 10) {
+                parkingHistory = parkingHistory.slice(0, 10);
+            }
+            
+            // Save to localStorage
+            localStorage.setItem('parkingHistory', JSON.stringify(parkingHistory));
+            
+            // Update display
+            updateParkingHistoryDisplay();
+        }
+        
+        function loadParkingHistory() {
+            const savedHistory = localStorage.getItem('parkingHistory');
+            if (savedHistory) {
+                parkingHistory = JSON.parse(savedHistory);
+                updateParkingHistoryDisplay();
             }
         }
-
+        
+        function updateParkingHistoryDisplay() {
+            const historyContainer = document.getElementById('parking-history');
+            
+            if (parkingHistory.length === 0) {
+                historyContainer.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-history"></i>
+                        <div>No parking history yet</div>
+                    </div>
+                `;
+                return;
+            }
+            
+            historyContainer.innerHTML = '';
+            
+            parkingHistory.forEach((parking, index) => {
+                const historyItem = document.createElement('div');
+                historyItem.className = 'history-item';
+                historyItem.onclick = () => {
+                    // Load this parking location
+                    parkingLocation = parking;
+                    localStorage.setItem('parkingLocation', JSON.stringify(parkingLocation));
+                    updateHomeMap();
+                    showFindScreen();
+                };
+                
+                historyItem.innerHTML = `
+                    <div class="location-info">
+                        <div class="location-name">${parking.note}</div>
+                        <div class="location-time">${formatTime(parking.timestamp)}</div>
+                    </div>
+                    <div class="status-indicator"></div>
+                `;
+                
+                historyContainer.appendChild(historyItem);
+            });
+        }
+        
+        // Camera functions
+        function startCamera() {
+            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                navigator.mediaDevices.getUserMedia({ video: true })
+                    .then(stream => {
+                        cameraStream = stream;
+                        const video = document.getElementById('camera-preview');
+                        video.srcObject = stream;
+                        video.style.display = 'block';
+                        
+                        // Show capture controls
+                        document.getElementById('start-camera-btn').style.display = 'none';
+                        document.getElementById('capture-btn').style.display = 'flex';
+                        document.getElementById('retake-btn').style.display = 'flex';
+                    })
+                    .catch(error => {
+                        console.error('Error accessing camera:', error);
+                        alert('Unable to access camera. Please check permissions.');
+                    });
+            } else {
+                alert('Camera not supported on this device.');
+            }
+        }
+        
+        function capturePhoto() {
+            const video = document.getElementById('camera-preview');
+            const canvas = document.getElementById('photo-canvas');
+            const photoPreview = document.getElementById('photo-preview');
+            
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            canvas.getContext('2d').drawImage(video, 0, 0);
+            
+            // Convert to data URL
+            photoData = canvas.toDataURL('image/jpeg');
+            photoPreview.src = photoData;
+            photoPreview.style.display = 'block';
+            video.style.display = 'none';
+            
+            // Stop camera stream
+            if (cameraStream) {
+                cameraStream.getTracks().forEach(track => track.stop());
+                cameraStream = null;
+            }
+            
+            // Update controls
+            document.getElementById('capture-btn').style.display = 'none';
+            document.getElementById('retake-btn').style.display = 'flex';
+        }
+        
+        function retakePhoto() {
+            // Clear photo data
+            photoData = null;
+            
+            // Hide photo preview
+            document.getElementById('photo-preview').style.display = 'none';
+            
+            // Show camera button
+            document.getElementById('start-camera-btn').style.display = 'flex';
+            document.getElementById('capture-btn').style.display = 'none';
+            document.getElementById('retake-btn').style.display = 'none';
+        }
+        
+        function captureNumberPlate() {
+            // In a real app, this would use OCR to read number plates
+            // For demo, we'll simulate it
+            const fakePlates = ['ABC123', 'XYZ789', 'PARK2023', 'MYCAR01', 'VHCL888'];
+            const randomPlate = fakePlates[Math.floor(Math.random() * fakePlates.length)];
+            
+            plateData = randomPlate;
+            
+            // Update UI
+            document.getElementById('plate-preview').innerHTML = `
+                <div style="text-align: center; padding: 20px;">
+                    <div style="background: #2c3e50; color: white; padding: 10px; border-radius: 5px; font-family: monospace; font-size: 24px; letter-spacing: 2px;">
+                        ${randomPlate}
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('plate-result').style.display = 'block';
+            document.getElementById('plate-text').textContent = randomPlate;
+        }
+        
         function retakePlate() {
-            numberPlateImage = null;
+            plateData = null;
             document.getElementById('plate-preview').innerHTML = `
                 <div style="text-align: center; color: #7f8c8d;">
                     <i class="fas fa-car" style="font-size: 40px; margin-bottom: 10px;"></i>
@@ -1853,152 +1967,456 @@
             `;
             document.getElementById('plate-result').style.display = 'none';
         }
-
-        // Enhanced Save Parking with Google Maps
-        async function saveParkingLocation() {
-            if (!currentLocation) {
-                alert('Please wait for location detection or enable GPS permissions.');
+        
+        function viewParkingPhoto() {
+            if (parkingLocation && parkingLocation.photo) {
+                // In a real app, this would show the photo in a modal or new screen
+                alert('Showing parking photo');
+            }
+        }
+        
+        // Navigation functions
+        function startNavigation() {
+            if (!parkingLocation) {
+                alert('No parking location saved. Please save a parking location first.');
                 return;
             }
             
-            const note = document.getElementById('parking-note').value.trim();
-            const now = new Date();
+            if (!currentLocation) {
+                alert('Unable to get your current location. Please check GPS permissions.');
+                return;
+            }
             
-            try {
-                // Get enhanced address information
-                let addressInfo = { address: 'Location saved', street: 'Unknown', city: '' };
-                if (googleMapsService) {
-                    addressInfo = await googleMapsService.reverseGeocode(currentLocation.lat, currentLocation.lng);
+            showNavigationScreen();
+        }
+        
+        function startARNavigation() {
+            if (!parkingLocation) {
+                alert('No parking location saved. Please save a parking location first.');
+                return;
+            }
+            
+            if (!currentLocation) {
+                alert('Unable to get your current location. Please check GPS permissions.');
+                return;
+            }
+            
+            // Start AR camera
+            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+                    .then(stream => {
+                        const video = document.getElementById('ar-camera-preview');
+                        video.srcObject = stream;
+                        isARActive = true;
+                        showARNavigationScreen();
+                        
+                        // Start compass
+                        if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+                            // iOS 13+ devices
+                            DeviceOrientationEvent.requestPermission()
+                                .then(permissionState => {
+                                    if (permissionState === 'granted') {
+                                        window.addEventListener('deviceorientation', handleDeviceOrientation);
+                                    }
+                                })
+                                .catch(console.error);
+                        } else {
+                            // Non-iOS devices
+                            window.addEventListener('deviceorientation', handleDeviceOrientation);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error accessing camera:', error);
+                        alert('Unable to access camera for AR navigation. Please check permissions.');
+                    });
+            } else {
+                alert('AR navigation not supported on this device.');
+            }
+        }
+        
+        function stopNavigation() {
+            isNavigating = false;
+            showFindScreen();
+        }
+        
+        function exitARNavigation() {
+            isARActive = false;
+            
+            // Stop camera stream
+            const video = document.getElementById('ar-camera-preview');
+            if (video.srcObject) {
+                video.srcObject.getTracks().forEach(track => track.stop());
+            }
+            
+            showFindScreen();
+        }
+        
+        function toggleCompass() {
+            // Toggle compass display in AR mode
+            const compassRose = document.querySelector('.compass-rose');
+            if (compassRose.style.display === 'none') {
+                compassRose.style.display = 'flex';
+            } else {
+                compassRose.style.display = 'none';
+            }
+        }
+        
+        function handleDeviceOrientation(event) {
+            if (!isARActive) return;
+            
+            // Get compass heading
+            if (event.alpha !== null) {
+                compassHeading = event.alpha;
+                
+                // Update compass needle
+                const needle = document.getElementById('compass-needle');
+                if (needle) {
+                    needle.style.transform = `rotate(${compassHeading}deg)`;
                 }
                 
-                const parkingRecord = {
-                    id: Date.now(),
-                    lat: currentLocation.lat,
-                    lng: currentLocation.lng,
-                    accuracy: currentLocation.accuracy,
-                    address: addressInfo.address,
-                    street: addressInfo.street,
-                    city: addressInfo.city,
-                    accuracyLevel: currentLocation.accuracy <= 20 ? 'high' : 
-                                 currentLocation.accuracy <= 50 ? 'medium' : 'low',
-                    note: note || `Parked on ${addressInfo.street}`,
-                    timestamp: now.toISOString(),
-                    displayTime: now.toLocaleString(),
-                    photo: currentPhoto,
-                    plateNumber: currentLocation.plateNumber || null,
-                    plateImage: currentLocation.plateImage || null
-                };
-                
-                parkingData.unshift(parkingRecord);
-                localStorage.setItem('parkingData', JSON.stringify(parkingData));
-                
-                // Show success with enhanced info
-                let successMessage = `Location saved with ${Math.round(currentLocation.accuracy)}m precision!`;
-                if (addressInfo.street !== 'Unknown') {
-                    successMessage += `<br><small>${addressInfo.street}</small>`;
+                // Calculate direction to vehicle
+                if (currentLocation && parkingLocation) {
+                    const bearing = calculateBearing(
+                        currentLocation.lat, currentLocation.lng,
+                        parkingLocation.lat, parkingLocation.lng
+                    );
+                    
+                    const relativeBearing = bearing - compassHeading;
+                    updateARDirection(relativeBearing);
                 }
-                if (currentLocation.plateNumber) {
-                    successMessage += `<br><small>Plate: ${currentLocation.plateNumber}</small>`;
+            }
+        }
+        
+        function updateARDirection(relativeBearing) {
+            const directionArrow = document.querySelector('.direction-arrow');
+            const arDistance = document.getElementById('ar-distance');
+            const arGuidance = document.getElementById('ar-guidance');
+            
+            if (!directionArrow || !arDistance || !arGuidance) return;
+            
+            // Calculate distance
+            const distance = calculateDistance(
+                currentLocation.lat, currentLocation.lng,
+                parkingLocation.lat, parkingLocation.lng
+            );
+            
+            arDistance.textContent = `${Math.round(distance)} m`;
+            
+            // Update arrow direction based on relative bearing
+            let arrow = '↑';
+            let guidance = 'Point your camera towards your vehicle';
+            
+            if (Math.abs(relativeBearing) < 30) {
+                arrow = '↑';
+                guidance = 'Your vehicle is straight ahead';
+            } else if (relativeBearing > 30 && relativeBearing < 150) {
+                arrow = '→';
+                guidance = 'Turn right to see your vehicle';
+            } else if (relativeBearing < -30 && relativeBearing > -150) {
+                arrow = '←';
+                guidance = 'Turn left to see your vehicle';
+            } else {
+                arrow = '↓';
+                guidance = 'Your vehicle is behind you';
+            }
+            
+            directionArrow.textContent = arrow;
+            arGuidance.textContent = guidance;
+            
+            // Show plate scanning if close enough
+            const plateScanning = document.getElementById('plate-scanning');
+            if (distance < 20) {
+                plateScanning.style.display = 'block';
+            } else {
+                plateScanning.style.display = 'none';
+            }
+        }
+        
+        // Settings functions
+        function toggleAutoPark() {
+            autoParkEnabled = document.getElementById('auto-park-toggle').checked;
+            localStorage.setItem('autoParkEnabled', autoParkEnabled);
+            updateAutoParkStatus();
+            
+            if (autoParkEnabled) {
+                startLocationTracking();
+                showNotification('Auto-Park enabled', 'success');
+            } else {
+                if (watchId) {
+                    navigator.geolocation.clearWatch(watchId);
+                    watchId = null;
                 }
-                
-                document.getElementById('park-map').innerHTML = `
-                    <i class="fas fa-check-circle" style="font-size: 40px; margin-bottom: 10px; color: #27ae60;"></i>
-                    <span>${successMessage}</span>
+                showNotification('Auto-Park disabled', 'warning');
+            }
+        }
+        
+        function toggleSmartReminders() {
+            smartRemindersEnabled = document.getElementById('smart-reminders-toggle').checked;
+            localStorage.setItem('smartRemindersEnabled', smartRemindersEnabled);
+            updateRemindersStatus();
+            
+            if (smartRemindersEnabled) {
+                showNotification('Smart reminders enabled', 'success');
+                updateSmartReminders();
+            } else {
+                showNotification('Smart reminders disabled', 'warning');
+            }
+        }
+        
+        function updateAutoParkStatus() {
+            document.getElementById('auto-park-status').textContent = autoParkEnabled ? 'Active' : 'Inactive';
+        }
+        
+        function updateRemindersStatus() {
+            document.getElementById('reminders-status').textContent = smartRemindersEnabled ? 'On' : 'Off';
+        }
+        
+        function updateSmartReminders() {
+            if (!parkingLocation || !smartRemindersEnabled) return;
+            
+            const remindersList = document.getElementById('reminders-list');
+            remindersList.innerHTML = '';
+            
+            // Check for parking time limits
+            const parkingTime = Date.now() - parkingLocation.timestamp;
+            const hoursParked = parkingTime / (1000 * 60 * 60);
+            
+            if (hoursParked > 2) {
+                addReminder('⏰ You\'ve been parked for over 2 hours', 'Check for parking time limits');
+            }
+            
+            if (hoursParked > 24) {
+                addReminder('🚨 You\'ve been parked for over 24 hours', 'Your vehicle may be at risk of towing');
+            }
+            
+            // Check if it's nighttime
+            const currentHour = new Date().getHours();
+            if (currentHour < 6 || currentHour > 18) {
+                addReminder('🌙 It\'s nighttime', 'Park in a well-lit area for safety');
+            }
+            
+            // Check if weekend
+            const isWeekend = new Date().getDay() === 0 || new Date().getDay() === 6;
+            if (isWeekend) {
+                addReminder('📅 It\'s the weekend', 'Check for weekend parking restrictions');
+            }
+            
+            function addReminder(title, description) {
+                const reminder = document.createElement('div');
+                reminder.className = 'notification warning';
+                reminder.innerHTML = `
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <div>
+                        <div style="font-weight: 600;">${title}</div>
+                        <div style="font-size: 12px;">${description}</div>
+                    </div>
                 `;
+                remindersList.appendChild(reminder);
+            }
+        }
+        
+        // Offline maps functions
+        function downloadOfflineMap() {
+            if (!currentLocation) {
+                alert('Unable to get your current location. Please check GPS permissions.');
+                return;
+            }
+            
+            const radius = parseInt(document.getElementById('map-radius').value);
+            const mapId = `map_${Date.now()}`;
+            
+            // Simulate download progress
+            const progressBar = document.getElementById('download-progress-bar');
+            const downloadStatus = document.getElementById('download-status');
+            
+            let progress = 0;
+            const interval = setInterval(() => {
+                progress += 5;
+                progressBar.style.width = `${progress}%`;
+                downloadStatus.textContent = `Downloading... ${progress}%`;
                 
-            } catch (error) {
-                // Fallback to basic save
-                console.error('Enhanced save failed:', error);
-                const parkingRecord = {
-                    id: Date.now(),
-                    lat: currentLocation.lat,
-                    lng: currentLocation.lng,
-                    accuracy: currentLocation.accuracy,
-                    accuracyLevel: currentLocation.accuracy <= 20 ? 'high' : 
-                                 currentLocation.accuracy <= 50 ? 'medium' : 'low',
-                    note: note || `Parked (${Math.round(currentLocation.accuracy)}m accuracy)`,
-                    timestamp: now.toISOString(),
-                    displayTime: now.toLocaleString(),
-                    photo: currentPhoto,
-                    plateNumber: currentLocation.plateNumber || null
-                };
-                
-                parkingData.unshift(parkingRecord);
-                localStorage.setItem('parkingData', JSON.stringify(parkingData));
-                
-                document.getElementById('park-map').innerHTML = `
-                    <i class="fas fa-check-circle" style="font-size: 40px; margin-bottom: 10px; color: #27ae60;"></i>
-                    <span>Location saved with ${Math.round(currentLocation.accuracy)}m precision!</span>
+                if (progress >= 100) {
+                    clearInterval(interval);
+                    
+                    // Save offline map
+                    const offlineMap = {
+                        id: mapId,
+                        lat: currentLocation.lat,
+                        lng: currentLocation.lng,
+                        radius: radius,
+                        timestamp: Date.now(),
+                        name: `Map (${radius}km radius)`
+                    };
+                    
+                    offlineMaps.push(offlineMap);
+                    localStorage.setItem('offlineMaps', JSON.stringify(offlineMaps));
+                    
+                    downloadStatus.textContent = 'Download complete!';
+                    updateOfflineMapsDisplay();
+                    
+                    showNotification('Offline map downloaded successfully', 'success');
+                }
+            }, 100);
+        }
+        
+        function updateOfflineMapsDisplay() {
+            const mapsList = document.getElementById('downloaded-maps-list');
+            
+            if (offlineMaps.length === 0) {
+                mapsList.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-map" style="font-size: 40px;"></i>
+                        <div>No maps downloaded yet</div>
+                    </div>
                 `;
+                return;
             }
             
-            // Reset form and cleanup
-            document.getElementById('parking-note').value = '';
-            currentPhoto = null;
-            numberPlateImage = null;
+            mapsList.innerHTML = '';
             
-            if (cameraStream) {
-                cameraStream.getTracks().forEach(track => track.stop());
-            }
-            
-            // Return to home screen
-            setTimeout(function() {
-                parkScreen.classList.remove('active');
-                homeScreen.classList.add('active');
-                updateParkingHistory();
-                updateFindButton();
-                if (googleMapsService) {
-                    googleMapsService.initHomeMap();
-                }
-            }, 1500);
+            offlineMaps.forEach(map => {
+                const mapItem = document.createElement('div');
+                mapItem.className = 'history-item';
+                mapItem.innerHTML = `
+                    <div class="location-info">
+                        <div class="location-name">${map.name}</div>
+                        <div class="location-time">Downloaded ${formatTime(map.timestamp)}</div>
+                    </div>
+                    <button class="action-btn" style="padding: 5px 10px; font-size: 12px;" onclick="deleteOfflineMap('${map.id}')">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                `;
+                mapsList.appendChild(mapItem);
+            });
         }
-
-        // Update the rest of your existing functions to use enhanced GPS
-        function handleAccuratePosition(position) {
-            calibrationAttempts++;
+        
+        function deleteOfflineMap(mapId) {
+            offlineMaps = offlineMaps.filter(map => map.id !== mapId);
+            localStorage.setItem('offlineMaps', JSON.stringify(offlineMaps));
+            updateOfflineMapsDisplay();
+            showNotification('Offline map deleted', 'success');
+        }
+        
+        // PWA functions
+        function checkPWAInstallation() {
+            // Check if the app is already installed
+            if (window.matchMedia('(display-mode: standalone)').matches) {
+                return; // Already installed
+            }
             
-            if (position.accuracy < bestAccuracy) {
-                bestAccuracy = position.accuracy;
-                currentLocation = position;
+            // Check if beforeinstallprompt event is supported
+            if ('BeforeInstallPromptEvent' in window) {
+                window.addEventListener('beforeinstallprompt', (e) => {
+                    // Prevent the mini-infobar from appearing on mobile
+                    e.preventDefault();
+                    // Show our custom install prompt
+                    document.getElementById('install-prompt').style.display = 'block';
+                    
+                    // Store the event for later use
+                    window.deferredPrompt = e;
+                });
+            }
+        }
+        
+        function installPWA() {
+            if (window.deferredPrompt) {
+                // Show the install prompt
+                window.deferredPrompt.prompt();
                 
-                updateCalibrationDisplay(position.accuracy);
-                
-                const targetAccuracy = getTargetAccuracy();
-                if (position.accuracy <= targetAccuracy) {
-                    showAccuracyAchieved(position.accuracy);
-                }
+                // Wait for the user to respond to the prompt
+                window.deferredPrompt.userChoice.then((choiceResult) => {
+                    if (choiceResult.outcome === 'accepted') {
+                        console.log('User accepted the install prompt');
+                    } else {
+                        console.log('User dismissed the install prompt');
+                    }
+                    
+                    // Clear the saved prompt since it can't be used again
+                    window.deferredPrompt = null;
+                    
+                    // Hide our custom install prompt
+                    document.getElementById('install-prompt').style.display = 'none';
+                });
             }
+        }
+        
+        // Utility functions
+        function calculateDistance(lat1, lon1, lat2, lon2) {
+            const R = 6371000; // Earth's radius in meters
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a = 
+                Math.sin(dLat/2) * Math.sin(dLat/2) +
+                Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+                Math.sin(dLon/2) * Math.sin(dLon/2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            return R * c;
+        }
+        
+        function calculateBearing(lat1, lon1, lat2, lon2) {
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const y = Math.sin(dLon) * Math.cos(lat2 * Math.PI / 180);
+            const x = Math.cos(lat1 * Math.PI / 180) * Math.sin(lat2 * Math.PI / 180) -
+                      Math.sin(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.cos(dLon);
+            return (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
+        }
+        
+        function calculateDistanceFromCurrent() {
+            if (!currentLocation || !parkingLocation) return '--';
             
-            const maxAttempts = accuracyMode === 'high' ? 30 : 
-                              accuracyMode === 'medium' ? 15 : 5;
+            const distance = calculateDistance(
+                currentLocation.lat, currentLocation.lng,
+                parkingLocation.lat, parkingLocation.lng
+            );
             
-            if (calibrationAttempts >= maxAttempts) {
-                stopCalibration();
-                if (currentLocation) {
-                    showFinalAccuracy(currentLocation.accuracy);
-                }
+            if (distance < 1000) {
+                return `${Math.round(distance)} meters`;
+            } else {
+                return `${(distance / 1000).toFixed(1)} km`;
             }
         }
-
-        function stopCalibration() {
-            enhancedGPS.stopTracking();
-            if (calibrationInterval) {
-                clearInterval(calibrationInterval);
+        
+        function formatTime(timestamp) {
+            const now = Date.now();
+            const diff = now - timestamp;
+            
+            if (diff < 60000) { // Less than 1 minute
+                return 'just now';
+            } else if (diff < 3600000) { // Less than 1 hour
+                const minutes = Math.floor(diff / 60000);
+                return `${minutes} minute${minutes !== 1 ? 's' : ''} ago`;
+            } else if (diff < 86400000) { // Less than 1 day
+                const hours = Math.floor(diff / 3600000);
+                return `${hours} hour${hours !== 1 ? 's' : ''} ago`;
+            } else {
+                const days = Math.floor(diff / 86400000);
+                return `${days} day${days !== 1 ? 's' : ''} ago`;
             }
         }
-
-        // Replace AR updates with enhanced version
-        function startARUpdates() {
-            arUpdateInterval = setInterval(updateEnhancedARDirection, 1000);
-            updateEnhancedARDirection();
+        
+        function showNotification(message, type) {
+            // Create a temporary notification
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.innerHTML = `
+                <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'warning' ? 'exclamation-triangle' : 'info-circle'}"></i>
+                <span>${message}</span>
+            `;
+            
+            // Add to the top of the main content
+            const mainContent = document.querySelector('.main-content');
+            mainContent.insertBefore(notification, mainContent.firstChild);
+            
+            // Remove after 5 seconds
+            setTimeout(() => {
+                notification.remove();
+            }, 5000);
         }
-
-        // Keep all your existing functions but they'll now use the enhanced services
-
-        // ... (rest of your existing code remains the same, just enhanced with the new services)
-
-        // Initialize the app when loaded
-        window.addEventListener('DOMContentLoaded', initApp);
+        
+        function manualLocationAdjustment() {
+            // In a real app, this would open a map for manual location adjustment
+            alert('Manual location adjustment would open here. For this demo, please use the automatic GPS location.');
+        }
     </script>
 </body>
 </html>
